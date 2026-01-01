@@ -1,0 +1,13 @@
+2026-01-01 10:35:11.799 UTC [559] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+2026-01-01 10:35:11.800 UTC [559] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-01-01 10:35:11.805 UTC [559] FATAL:  could not create lock file "/run/postgresql/.s.PGSQL.5432.lock": No such file or directory
+2026-01-01 10:35:11.808 UTC [559] LOG:  database system is shut down
+2026-01-01 10:37:59.231 UTC [356] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+2026-01-01 10:37:59.237 UTC [356] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-01-01 10:37:59.250 UTC [356] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-01-01 10:37:59.287 UTC [359] LOG:  database system was shut down at 2026-01-01 10:35:11 UTC
+2026-01-01 10:37:59.323 UTC [356] LOG:  database system is ready to accept connections
+2026-01-01 10:38:11.917 UTC [547] LOG:  invalid length of startup packet
+2026-01-01 10:38:11.932 UTC [548] LOG:  invalid length of startup packet
+2026-01-01 10:42:59.357 UTC [357] LOG:  checkpoint starting: time
+2026-01-01 10:44:40.021 UTC [357] LOG:  checkpoint complete: wrote 1004 buffers (6.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=100.606 s, sync=0.040 s, total=100.665 s; sync files=330, longest=0.003 s, average=0.001 s; distance=4764 kB, estimate=4764 kB; lsn=0/19EEF40, redo lsn=0/19EEF08

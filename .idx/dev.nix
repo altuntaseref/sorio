@@ -1,53 +1,46 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-24.05"; # or "unstable"
-  # Use https://search.nixos.org/packages to find packages
-  packages = [
-    # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
-    # pkgs.nodejs_20
-    # pkgs.nodePackages.nodemon
-  ];
-  # Sets environment variables in the workspace
-  env = {};
+  channel = "stable-24.05"; 
+
+  packages = [ pkgs.postgresql_16 ];
+
+  # BURASI EKLENDİ: Terminal ve uygulamanın DB'yi nerede bulacağını bilmesi için
+  env = {
+    PGHOST = "127.0.0.1";
+    PGPORT = "5432";
+    PGUSER = "user"; # IDX varsayılan kullanıcısı
+    PGDATABASE = "sorio";
+  };
+
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
-    extensions = [
-      # "vscodevim.vim"
-      "google.gemini-cli-vscode-ide-companion"
-    ];
-    # Enable previews
-    previews = {
-      enable = true;
-      previews = {
-        # web = {
-        #   # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-        #   # and show it in IDX's web preview panel
-        #   command = ["npm" "run" "dev"];
-        #   manager = "web";
-        #   env = {
-        #     # Environment variables to set for your server
-        #     PORT = "$PORT";
-        #   };
-        # };
-      };
-    };
-    # Workspace lifecycle hooks
+    extensions = [ "google.gemini-cli-vscode-ide-companion" ];
+
     workspace = {
-      # Runs when a workspace is first created
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
-        # Open editors for the following files by default, if they exist:
         default.openFiles = [ ".idx/dev.nix" "README.md" ];
       };
-      # Runs when the workspace is (re)started
+      
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        start-postgres = ''
+          # Klasör yoksa oluştur (DB ilk kurulumu)
+          if [ ! -d ".data/postgres" ]; then
+            initdb -D .data/postgres
+            
+            # Şifresiz yerel bağlantıya izin ver
+            echo "host all all 127.0.0.1/32 trust" >> .data/postgres/pg_hba.conf
+            echo "host all all ::1/128 trust" >> .data/postgres/pg_hba.conf
+            
+            # BURASI EKLENDİ: Postgres'in TCP üzerinden dinlediğinden emin ol
+            echo "listen_addresses = '*'" >> .data/postgres/postgresql.conf
+            echo "port = 5432" >> .data/postgres/postgresql.conf
+          fi
+
+          # Sunucuyu başlat ve hazır olmasını bekle
+          # -l logfile: Hataları görmek için log dosyası oluşturur
+          pg_ctl -D .data/postgres -l .data/postgres/logfile -o "-k /tmp" start
+
+          # Veritabanını oluştur (hata verirse yoksay - zaten varsa)
+          createdb sorio || true
+        '';
       };
     };
   };
