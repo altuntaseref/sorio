@@ -1,4 +1,3 @@
-
 import {
   Injectable,
   UnauthorizedException,
@@ -70,6 +69,10 @@ export class AuthService {
 
     const tokens = await this._generateTokens(user);
 
+    // İLERİ SEVİYE NOT: Burada normalde refresh token'ı veritabanına (user tablosuna) 
+    // hash'leyip kaydetmek güvenlik açısından daha iyidir.
+    // await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+
     return {
       success: true,
       message: 'Login successful.',
@@ -80,6 +83,18 @@ export class AuthService {
       },
     };
   }
+
+  // --- YENİ EKLENEN LOGOUT METODU ---
+  async logout(userId: string) {
+    // Eğer veritabanında refresh token tutuyorsan, burada onu silmelisin (null yapmalısın).
+    // Örnek: await this.usersService.removeRefreshToken(userId);
+    
+    return {
+      success: true,
+      message: 'Logout successful.',
+    };
+  }
+  // ----------------------------------
 
   async refreshToken(user: User) {
     const tokens = await this._generateTokens(user);
@@ -110,6 +125,7 @@ export class AuthService {
   }
 
   private _toUserDto(user: User) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
     return result;
   }
