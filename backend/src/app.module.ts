@@ -5,6 +5,7 @@ import { DatabaseModule } from './common/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { LoggerService } from './common/logger/logger.service';
+import { SubjectsModule } from './subjects/subjects.module'; // Import SubjectsModule
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LoggerService } from './common/logger/logger.service';
     DatabaseModule,
     UsersModule,
     AuthModule,
+    SubjectsModule, // Add SubjectsModule here
   ],
   controllers: [AppController],
   providers: [LoggerService],
