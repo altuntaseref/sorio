@@ -5,12 +5,14 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Subject } from '../../subjects/entities/subject.entity';
 import { Topic } from '../../topics/entities/topic.entity';
+import { QuestionStatistic } from '../../statistics/entities/question-statistic.entity';
 
 @Entity('questions')
 @Index(['subject', 'topic'])
@@ -57,6 +59,9 @@ export class Question {
 
   @Column({ type: 'text', name: 'ai_solution', nullable: true })
   aiSolution: string;
+
+  @OneToMany(() => QuestionStatistic, (statistic) => statistic.question)
+  stats: QuestionStatistic[];
 
   @Index()
   @CreateDateColumn({

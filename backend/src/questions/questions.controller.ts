@@ -5,11 +5,14 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
+import { GetQuestionsDto } from './dto/get-questions.dto';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
@@ -33,6 +36,18 @@ export class QuestionsController {
       data: {
         question,
       },
+    };
+  }
+
+  @Get()
+  async findAll(
+    @GetUser('id') userId: string,
+    @Query() getQuestionsDto: GetQuestionsDto,
+  ) {
+    const result = await this.questionsService.findAll(userId, getQuestionsDto);
+    return {
+      success: true,
+      data: result,
     };
   }
 }

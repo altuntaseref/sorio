@@ -8,6 +8,8 @@ import { LoggerService } from './common/logger/logger.service';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadModule } from './upload/upload.module';
 import { QuestionsModule } from './questions/questions.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { QuestionStatistic } from './statistics/entities/question-statistic.entity';
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import { QuestionsModule } from './questions/questions.module';
       isGlobal: true,
     }),
     DatabaseModule,
+    TypeOrmModule.forFeature([QuestionStatistic]),
     UsersModule,
     AuthModule,
     SubjectsModule,
