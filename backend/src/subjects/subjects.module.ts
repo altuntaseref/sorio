@@ -1,14 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SubjectsController } from './subjects.controller';
-import { SubjectsService } from './subjects.service';
 import { Subject } from './entities/subject.entity';
-import { Topic } from './entities/topic.entity';
-import { AuthModule } from '../auth/auth.module';
+import { SubjectsService } from './subjects.service';
+import { SubjectsController } from './subjects.controller';
+import { TopicsModule } from '../topics/topics.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Subject, Topic]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Subject]), forwardRef(() => TopicsModule)],
   controllers: [SubjectsController],
   providers: [SubjectsService],
+  exports: [SubjectsService],
 })
 export class SubjectsModule {}

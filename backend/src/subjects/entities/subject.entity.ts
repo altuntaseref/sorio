@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Topic } from './topic.entity';
+import { Topic } from '../../topics/entities/topic.entity';
 
 @Entity('subjects')
 // Partial unique indexes are created in the migration file
