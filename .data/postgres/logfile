@@ -48,3 +48,18 @@
 2026-01-01 12:52:21.506 UTC [29757] STATEMENT:  SELECT "User"."id" AS "User_id", "User"."email" AS "User_email", "User"."password_hash" AS "User_password_hash", "User"."first_name" AS "User_first_name", "User"."last_name" AS "User_last_name", "User"."avatar_url" AS "User_avatar_url", "User"."exam_target" AS "User_exam_target", "User"."provider" AS "User_provider", "User"."provider_id" AS "User_provider_id", "User"."is_active" AS "User_is_active", "User"."created_at" AS "User_created_at", "User"."updated_at" AS "User_updated_at" FROM "users" "User" WHERE (("User"."email" = $1)) LIMIT 1
 2026-01-01 12:58:00.894 UTC [357] LOG:  checkpoint starting: time
 2026-01-01 12:58:01.734 UTC [357] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.808 s, sync=0.006 s, total=0.841 s; sync files=6, longest=0.004 s, average=0.001 s; distance=0 kB, estimate=3860 kB; lsn=0/19F1010, redo lsn=0/19F0FD8
+2026-01-02 07:46:55.917 UTC [357] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+2026-01-02 07:46:55.919 UTC [357] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-01-02 07:46:55.930 UTC [357] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-01-02 07:46:55.952 UTC [377] LOG:  database system was interrupted; last known up at 2026-01-01 12:58:01 UTC
+2026-01-02 07:46:56.181 UTC [377] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-01-02 07:46:56.209 UTC [377] LOG:  redo starts at 0/19F0FD8
+2026-01-02 07:46:56.209 UTC [377] LOG:  invalid record length at 0/19F10C0: expected at least 24, got 0
+2026-01-02 07:46:56.209 UTC [377] LOG:  redo done at 0/19F1088 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-01-02 07:46:56.244 UTC [375] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-01-02 07:46:56.276 UTC [375] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.008 s, sync=0.004 s, total=0.039 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/19F10C0, redo lsn=0/19F10C0
+2026-01-02 07:46:56.306 UTC [357] LOG:  database system is ready to accept connections
+2026-01-02 07:46:56.817 UTC [390] ERROR:  database "sorio" already exists
+2026-01-02 07:46:56.817 UTC [390] STATEMENT:  CREATE DATABASE sorio;
+2026-01-02 07:46:58.751 UTC [446] LOG:  invalid length of startup packet
+2026-01-02 07:46:58.788 UTC [449] LOG:  invalid length of startup packet
