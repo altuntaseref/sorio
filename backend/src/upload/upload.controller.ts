@@ -1,9 +1,18 @@
-import { BadRequestException, Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { R2Service } from './r2.service';
 import { GetPresignedUrlDto } from './dto/get-presigned-url.dto';
+import { DeleteImageDto } from './dto/delete-image.dto';
 import * as mime from 'mime-types';
 
 @UseGuards(JwtAuthGuard)
@@ -45,6 +54,25 @@ export class UploadController {
         key,
         expiresIn,
       },
+    };
+  }
+
+  @Delete('image')
+  async deleteImage(
+    @GetUser() user: User,
+    @Query() { key }: DeleteImageDto,
+  ) {
+    const keyParts = key.split('/');
+    // Validate that the key belongs to the current user
+    if (keyParts.length < 3 || keyParts[1] !== user.id) {
+      throw new ForbiddenException('You are not authorized to delete this file.');
+    }
+
+    await this.r2Service.deleteObject(key);
+
+    return {
+      success: true,
+      message: 'Image deleted successfully',
     };
   }
 }

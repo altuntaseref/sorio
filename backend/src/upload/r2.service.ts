@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
@@ -15,7 +20,13 @@ export class R2Service {
     const bucketName = process.env.R2_BUCKET_NAME;
     const publicUrl = process.env.R2_PUBLIC_URL;
 
-    if (!accountId || !accessKeyId || !secretAccessKey || !bucketName || !publicUrl) {
+    if (
+      !accountId ||
+      !accessKeyId ||
+      !secretAccessKey ||
+      !bucketName ||
+      !publicUrl
+    ) {
       throw new Error('Missing Cloudflare R2 environment variables');
     }
 
@@ -58,6 +69,21 @@ export class R2Service {
   }
 
   async deleteObject(key: string): Promise<void> {
+    // Check if the file exists before attempting to delete it
+    try {
+      await this.s3Client.send(
+        new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        }),
+      );
+    } catch (error) {
+      if (error.name === 'NotFound') {
+        throw new NotFoundException('File not found.');
+      }
+      throw error; // Re-throw other errors
+    }
+
     const command = new DeleteObjectCommand({
       Bucket: this.bucketName,
       Key: key,
