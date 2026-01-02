@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { LoggerService } from './common/logger/logger.service';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadModule } from './upload/upload.module';
+import { QuestionsModule } from './questions/questions.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { UploadModule } from './upload/upload.module';
     UsersModule,
     AuthModule,
     SubjectsModule,
-    UploadModule, // Register the UploadModule
+    UploadModule,
+    QuestionsModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],
