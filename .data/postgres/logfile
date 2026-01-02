@@ -111,3 +111,18 @@
 2026-01-02 11:02:04.448 UTC [375] LOG:  checkpoint complete: wrote 55 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=5.431 s, sync=0.010 s, total=5.463 s; sync files=46, longest=0.004 s, average=0.001 s; distance=243 kB, estimate=243 kB; lsn=0/1B24FC0, redo lsn=0/1B24F88
 2026-01-02 11:26:58.850 UTC [375] LOG:  checkpoint starting: time
 2026-01-02 11:26:59.287 UTC [375] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.410 s, sync=0.008 s, total=0.437 s; sync files=5, longest=0.006 s, average=0.002 s; distance=3 kB, estimate=219 kB; lsn=0/1B25ED8, redo lsn=0/1B25EA0
+2026-01-02 22:32:02.625 UTC [510] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+2026-01-02 22:32:02.695 UTC [510] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-01-02 22:32:02.704 UTC [510] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-01-02 22:32:02.726 UTC [516] LOG:  database system was interrupted; last known up at 2026-01-02 15:04:31 UTC
+2026-01-02 22:32:03.075 UTC [516] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-01-02 22:32:03.087 UTC [516] LOG:  redo starts at 0/2168950
+2026-01-02 22:32:03.087 UTC [516] LOG:  invalid record length at 0/2168A38: expected at least 24, got 0
+2026-01-02 22:32:03.087 UTC [516] LOG:  redo done at 0/2168A00 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-01-02 22:32:03.112 UTC [514] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-01-02 22:32:03.146 UTC [514] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.008 s, sync=0.004 s, total=0.042 s; sync files=2, longest=0.003 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/2168A38, redo lsn=0/2168A38
+2026-01-02 22:32:03.231 UTC [510] LOG:  database system is ready to accept connections
+2026-01-02 22:32:03.572 UTC [525] ERROR:  database "sorio" already exists
+2026-01-02 22:32:03.572 UTC [525] STATEMENT:  CREATE DATABASE sorio;
+2026-01-02 22:32:08.912 UTC [588] LOG:  invalid length of startup packet
+2026-01-02 22:32:08.966 UTC [590] LOG:  invalid length of startup packet
