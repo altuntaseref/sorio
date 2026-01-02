@@ -138,4 +138,57 @@ export class QuestionsService {
       },
     };
   }
+
+  async findOne(userId: string, id: string) {
+    const queryBuilder = this.questionsRepository.createQueryBuilder('question');
+
+    queryBuilder
+      .where('question.id = :id', { id })
+      .leftJoinAndSelect('question.subject', 'subject')
+      .leftJoinAndSelect('question.topic', 'topic')
+      .leftJoinAndSelect('question.stats', 'stats', 'stats.userId = :userId', {
+        userId,
+      });
+
+    const question = await queryBuilder.getOne();
+
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+
+    if (question.userId !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to access this question',
+      );
+    }
+
+    const stats = question.stats?.[0] || {
+      totalAttempts: 0,
+      correctCount: 0,
+      incorrectCount: 0,
+      lastAttemptedAt: null,
+    };
+
+    return {
+      id: question.id,
+      name: question.name,
+      questionImageUrl: question.questionImageUrl,
+      correctAnswer: question.correctAnswer,
+      solutionNote: question.solutionNote,
+      solutionImageUrl: question.solutionImageUrl,
+      aiSolution: question.aiSolution,
+      subjectId: question.subjectId,
+      subjectName: question.subject.name,
+      topicId: question.topicId,
+      topicName: question.topic.name,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
+      stats: {
+        totalAttempts: stats.totalAttempts,
+        correctCount: stats.correctCount,
+        incorrectCount: stats.incorrectCount,
+        lastAttemptedAt: stats.lastAttemptedAt,
+      },
+    };
+  }
 }

@@ -7,6 +7,8 @@ import {
   HttpStatus,
   Get,
   Query,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -48,6 +50,20 @@ export class QuestionsController {
     return {
       success: true,
       data: result,
+    };
+  }
+
+  @Get(':id')
+  async findOne(
+    @GetUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const question = await this.questionsService.findOne(userId, id);
+    return {
+      success: true,
+      data: {
+        question,
+      },
     };
   }
 }
