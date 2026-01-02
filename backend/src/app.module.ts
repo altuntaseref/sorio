@@ -10,6 +10,7 @@ import { UploadModule } from './upload/upload.module';
 import { QuestionsModule } from './questions/questions.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuestionStatistic } from './statistics/entities/question-statistic.entity';
+import { QuizzesModule } from './quizzes/quizzes.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { QuestionStatistic } from './statistics/entities/question-statistic.enti
     SubjectsModule,
     UploadModule,
     QuestionsModule,
+    QuizzesModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],

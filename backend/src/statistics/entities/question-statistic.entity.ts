@@ -3,14 +3,19 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  Unique,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Question } from '../../questions/entities/question.entity';
 
 @Entity('question_statistics')
+@Unique(['userId', 'questionId'])
+@Index(['userId'])
+@Index(['questionId'])
 export class QuestionStatistic {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -39,7 +44,7 @@ export class QuestionStatistic {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
