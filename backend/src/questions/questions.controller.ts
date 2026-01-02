@@ -10,6 +10,7 @@ import {
   Param,
   ParseUUIDPipe,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -84,5 +85,33 @@ export class QuestionsController {
       message: 'Question updated successfully',
       data: { question: updatedQuestion },
     };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @GetUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const deletedQuestion = await this.questionsService.remove(userId, id);
+
+    const keysToDelete: string[] = [];
+    if (deletedQuestion.questionImageKey) {
+      keysToDelete.push(deletedQuestion.questionImageKey);
+    }
+    if (deletedQuestion.solutionImageKey) {
+      keysToDelete.push(deletedQuestion.solutionImageKey);
+    }
+
+    if (keysToDelete.length > 0) {
+      Promise.all(
+        keysToDelete.map((key) => this.r2Service.deleteObject(key)),
+      ).catch((error) => {
+        console.error(
+          'Failed to delete images from R2 after question deletion:',
+          error,
+        );
+      });
+    }
   }
 }

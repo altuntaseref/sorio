@@ -69,13 +69,13 @@ export class User {
   })
   updatedAt: Date;
 
-  @OneToMany(() => LoginLog, (loginLog) => loginLog.user)
+  @OneToMany(() => LoginLog, (loginLog) => loginLog.user, { onDelete: 'CASCADE' })
   loginLogs: LoginLog[];
 
-  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user, { onDelete: 'CASCADE' })
   refreshTokens: RefreshToken[];
 
-  @OneToMany(() => Question, (question) => question.user)
+  @OneToMany(() => Question, (question) => question.user, { onDelete: 'CASCADE' })
   questions: Question[];
 
   constructor(partial: Partial<User>) {

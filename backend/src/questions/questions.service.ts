@@ -259,4 +259,18 @@ export class QuestionsService {
 
     return { updatedQuestion, oldImageKeys };
   }
+
+  async remove(userId: string, id: string): Promise<Question> {
+    const question = await this.questionsRepository.findOne({
+      where: { id, userId },
+    });
+
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+
+    await this.questionsRepository.remove(question);
+
+    return question;
+  }
 }

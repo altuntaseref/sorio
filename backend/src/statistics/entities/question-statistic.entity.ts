@@ -43,7 +43,7 @@ export class QuestionStatistic {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Question, (question) => question.stats)
+  @ManyToOne(() => Question, (question) => question.stats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'question_id' })
   question: Question;
 }
