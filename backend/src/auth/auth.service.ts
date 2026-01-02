@@ -10,12 +10,17 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { User } from '../users/entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -41,15 +46,14 @@ export class AuthService {
       provider: 'email',
     });
 
-    const tokens = await this._generateTokens(newUser);
+    const tokens = await this._generateAndSaveTokens(newUser);
 
     return {
       success: true,
       message: 'User registered successfully.',
       data: {
         user: this._toUserDto(newUser),
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        ...tokens,
       },
     };
   }
@@ -67,50 +71,53 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    const tokens = await this._generateTokens(user);
-
-    // İLERİ SEVİYE NOT: Burada normalde refresh token'ı veritabanına (user tablosuna) 
-    // hash'leyip kaydetmek güvenlik açısından daha iyidir.
-    // await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+    const tokens = await this._generateAndSaveTokens(user);
 
     return {
       success: true,
       message: 'Login successful.',
       data: {
         user: this._toUserDto(user),
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        ...tokens,
       },
     };
   }
 
-  // --- YENİ EKLENEN LOGOUT METODU ---
+  async refresh(user: User, refreshToken: string) {
+    const tokenRecord = await this.refreshTokenRepository.findOne({
+      where: { token: refreshToken, user: { id: user.id } },
+    });
+
+    if (!tokenRecord) {
+      await this.refreshTokenRepository.delete({ user: { id: user.id } });
+      throw new UnauthorizedException('Refresh token not found or revoked.');
+    }
+
+    if (tokenRecord.expiresAt < new Date()) {
+      await this.refreshTokenRepository.remove(tokenRecord);
+      throw new UnauthorizedException('Refresh token has expired.');
+    }
+
+    const newTokens = await this._generateAndSaveTokens(user);
+
+    return {
+      success: true,
+      message: 'Tokens refreshed successfully.',
+      data: newTokens,
+    };
+  }
+
   async logout(userId: string) {
-    // Eğer veritabanında refresh token tutuyorsan, burada onu silmelisin (null yapmalısın).
-    // Örnek: await this.usersService.removeRefreshToken(userId);
-    
+    await this.refreshTokenRepository.delete({ user: { id: userId } });
     return {
       success: true,
       message: 'Logout successful.',
     };
   }
-  // ----------------------------------
 
-  async refreshToken(user: User) {
-    const tokens = await this._generateTokens(user);
-    return {
-      success: true,
-      message: 'Tokens refreshed successfully.',
-      data: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      },
-    };
-  }
-
-  private async _generateTokens(user: User) {
+  private async _generateAndSaveTokens(user: User) {
     const payload = { sub: user.id, email: user.email };
-    const [accessToken, refreshToken] = await Promise.all([
+    const [accessToken, refreshTokenString] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_SECRET,
         expiresIn: '15m',
@@ -121,12 +128,21 @@ export class AuthService {
       }),
     ]);
 
-    return { accessToken, refreshToken };
+    await this.refreshTokenRepository.delete({ user: { id: user.id } });
+
+    const newRefreshToken = this.refreshTokenRepository.create({
+      user,
+      token: refreshTokenString,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    await this.refreshTokenRepository.save(newRefreshToken);
+
+    return { accessToken, refreshToken: refreshTokenString };
   }
 
   private _toUserDto(user: User) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
+    const { password, refreshTokens, ...result } = user;
     return result;
   }
 

@@ -9,10 +9,11 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-// Projende bu dosyaların yolları neredeyse oradan import etmelisin:
 import { JwtAuthGuard } from './guards/jwt-auth.guard'; 
 import { GetUser } from '../common/decorators/get-user.decorator'; 
 import { User } from '../users/entities/user.entity';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RefreshTokenGuard } from './guards/refresh-token.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -29,12 +30,17 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  // --- YENİ EKLENEN LOGOUT ENDPOINT ---
-  @UseGuards(JwtAuthGuard) // Sadece giriş yapmış kullanıcılar çıkış yapabilir
+  @UseGuards(RefreshTokenGuard)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  refresh(@GetUser() user: User, @Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refresh(user, refreshTokenDto.refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@GetUser() user: User) {
-    // Kullanıcının ID'sini servise gönderiyoruz
     return this.authService.logout(user.id);
   }
 }
