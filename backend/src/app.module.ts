@@ -5,7 +5,8 @@ import { DatabaseModule } from './common/database.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { LoggerService } from './common/logger/logger.service';
-import { SubjectsModule } from './subjects/subjects.module'; // Import SubjectsModule
+import { SubjectsModule } from './subjects/subjects.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { SubjectsModule } from './subjects/subjects.module'; // Import SubjectsM
     DatabaseModule,
     UsersModule,
     AuthModule,
-    SubjectsModule, // Add SubjectsModule here
+    SubjectsModule,
+    UploadModule, // Register the UploadModule
   ],
   controllers: [AppController],
   providers: [LoggerService],
