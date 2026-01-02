@@ -103,3 +103,5 @@
 2026-01-02 10:42:00.303 UTC [375] LOG:  checkpoint complete: wrote 14 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.311 s, sync=0.009 s, total=1.339 s; sync files=13, longest=0.006 s, average=0.001 s; distance=3 kB, estimate=189 kB; lsn=0/1AE42E0, redo lsn=0/1AE42A8
 2026-01-02 10:46:58.393 UTC [375] LOG:  checkpoint starting: time
 2026-01-02 10:46:58.723 UTC [375] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.305 s, sync=0.007 s, total=0.330 s; sync files=4, longest=0.006 s, average=0.002 s; distance=3 kB, estimate=170 kB; lsn=0/1AE4F58, redo lsn=0/1AE4F20
+2026-01-02 10:51:58.826 UTC [375] LOG:  checkpoint starting: time
+2026-01-02 10:51:59.065 UTC [375] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.209 s, sync=0.008 s, total=0.240 s; sync files=3, longest=0.007 s, average=0.003 s; distance=3 kB, estimate=154 kB; lsn=0/1AE5E08, redo lsn=0/1AE5DD0
