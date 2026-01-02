@@ -7,9 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Question } from './entities/question.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { UpdateQuestionDto } from './dto/update-question.dto';
 import { Subject } from '../subjects/entities/subject.entity';
 import { Topic } from '../topics/entities/topic.entity';
 import { GetQuestionsDto } from './dto/get-questions.dto';
+import { QuestionStatistic } from '../statistics/entities/question-statistic.entity';
 
 @Injectable()
 export class QuestionsService {
@@ -20,6 +22,8 @@ export class QuestionsService {
     private subjectsRepository: Repository<Subject>,
     @InjectRepository(Topic)
     private topicsRepository: Repository<Topic>,
+    @InjectRepository(QuestionStatistic)
+    private statsRepository: Repository<QuestionStatistic>,
   ) {}
 
   async create(userId: string, createQuestionDto: CreateQuestionDto) {
@@ -79,7 +83,12 @@ export class QuestionsService {
       .where('question.userId = :userId', { userId })
       .leftJoinAndSelect('question.subject', 'subject')
       .leftJoinAndSelect('question.topic', 'topic')
-      .leftJoinAndSelect('question.stats', 'stats')
+      .leftJoinAndSelect(
+        'question.stats',
+        'stats',
+        'stats.userId = :userId',
+        { userId },
+      )
       .orderBy('question.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
@@ -106,11 +115,11 @@ export class QuestionsService {
         isMastered: stats.totalAttempts >= 10,
         hasNoErrors: stats.incorrectCount === 0 && stats.totalAttempts > 0,
         hasSomeErrors:
-          stats.incorrectCount < stats.totalAttempts / 2 &&
-          stats.incorrectCount > 0,
+          stats.incorrectCount > 0 &&
+          stats.incorrectCount < stats.totalAttempts / 2,
         hasManyErrors:
-          stats.incorrectCount >= stats.totalAttempts / 2 &&
-          stats.incorrectCount > 0,
+          stats.incorrectCount > 0 &&
+          stats.incorrectCount >= stats.totalAttempts / 2,
       };
 
       return {
@@ -190,5 +199,64 @@ export class QuestionsService {
         lastAttemptedAt: stats.lastAttemptedAt,
       },
     };
+  }
+
+  async update(
+    userId: string,
+    id: string,
+    updateQuestionDto: UpdateQuestionDto,
+  ): Promise<{ updatedQuestion: Question; oldImageKeys: string[] }> {
+    const question = await this.questionsRepository.findOne({
+      where: { id, userId },
+    });
+
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+
+    const oldImageKeys: string[] = [];
+
+    if (
+      updateQuestionDto.questionImageUrl &&
+      question.questionImageKey &&
+      updateQuestionDto.questionImageKey !== question.questionImageKey
+    ) {
+      oldImageKeys.push(question.questionImageKey);
+    }
+
+    if (
+      updateQuestionDto.solutionImageUrl &&
+      question.solutionImageKey &&
+      updateQuestionDto.solutionImageKey !== question.solutionImageKey
+    ) {
+      oldImageKeys.push(question.solutionImageKey);
+    }
+
+    if (updateQuestionDto.subjectId) {
+      const subject = await this.subjectsRepository.findOne({
+        where: [
+          { id: updateQuestionDto.subjectId, userId },
+          { id: updateQuestionDto.subjectId, isSystem: true },
+        ],
+      });
+      if (!subject) {
+        throw new NotFoundException('Subject not found');
+      }
+    }
+
+    if (updateQuestionDto.topicId) {
+      const topic = await this.topicsRepository.findOne({
+        where: { id: updateQuestionDto.topicId },
+      });
+      if (!topic) {
+        throw new NotFoundException('Topic not found');
+      }
+    }
+
+    Object.assign(question, updateQuestionDto);
+
+    const updatedQuestion = await this.questionsRepository.save(question);
+
+    return { updatedQuestion, oldImageKeys };
   }
 }

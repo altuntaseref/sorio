@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { LoginLog } from '../../auth/entities/login-log.entity';
 import { RefreshToken } from '../../auth/entities/refresh-token.entity';
+import { Question } from '../../questions/entities/question.entity';
 
 @Entity('users')
 export class User {
@@ -73,6 +74,9 @@ export class User {
 
   @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshTokens: RefreshToken[];
+
+  @OneToMany(() => Question, (question) => question.user)
+  questions: Question[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

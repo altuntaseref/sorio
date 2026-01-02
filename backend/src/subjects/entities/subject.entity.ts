@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Topic } from '../../topics/entities/topic.entity';
+import { Question } from '../../questions/entities/question.entity';
 
 @Entity('subjects')
 // Partial unique indexes are created in the migration file
@@ -45,4 +46,7 @@ export class Subject {
 
   @OneToMany(() => Topic, (topic) => topic.subject)
   topics: Topic[];
+
+  @OneToMany(() => Question, (question) => question.subject)
+  questions: Question[];
 }

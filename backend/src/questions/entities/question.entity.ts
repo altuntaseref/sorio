@@ -5,9 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  Index,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Subject } from '../../subjects/entities/subject.entity';
@@ -15,67 +14,61 @@ import { Topic } from '../../topics/entities/topic.entity';
 import { QuestionStatistic } from '../../statistics/entities/question-statistic.entity';
 
 @Entity('questions')
-@Index(['subject', 'topic'])
 export class Question {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Index()
-  @Column({ type: 'uuid', name: 'user_id' })
+  @Column()
+  name: string;
+
+  @Column({ name: 'user_id' })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @Column({ name: 'subject_id' })
+  subjectId: string;
+
+  @Column({ name: 'topic_id' })
+  topicId: string;
+
+  @Column({ name: 'question_image_url', nullable: true })
+  questionImageUrl: string;
+
+  @Column({ name: 'question_image_key', nullable: true })
+  questionImageKey: string;
+
+  @Column({ length: 1 })
+  correctAnswer: string;
+
+  @Column({ type: 'text', nullable: true })
+  solutionNote: string;
+
+  @Column({ name: 'solution_image_url', nullable: true })
+  solutionImageUrl: string;
+
+  @Column({ name: 'solution_image_key', nullable: true })
+  solutionImageKey: string;
+
+  @Column({ name: 'ai_solution', type: 'text', nullable: true })
+  aiSolution: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+  @ManyToOne(() => User, (user) => user.questions)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'uuid', name: 'subject_id' })
-  subjectId: string;
-
-  @ManyToOne(() => Subject, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Subject, (subject) => subject.questions)
   @JoinColumn({ name: 'subject_id' })
   subject: Subject;
 
-  @Column({ type: 'uuid', name: 'topic_id' })
-  topicId: string;
-
-  @ManyToOne(() => Topic, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Topic, (topic) => topic.questions)
   @JoinColumn({ name: 'topic_id' })
   topic: Topic;
 
-  @Column({ type: 'varchar', length: 200, nullable: true })
-  name: string;
-
-  @Column({ type: 'text', name: 'question_image_url' })
-  questionImageUrl: string;
-
-  @Column({ type: 'char', length: 1, name: 'correct_answer' })
-  correctAnswer: string;
-
-  @Column({ type: 'text', name: 'solution_note', nullable: true })
-  solutionNote: string;
-
-  @Column({ type: 'text', name: 'solution_image_url', nullable: true })
-  solutionImageUrl: string;
-
-  @Column({ type: 'text', name: 'ai_solution', nullable: true })
-  aiSolution: string;
-
-  @OneToMany(() => QuestionStatistic, (statistic) => statistic.question)
+  @OneToMany(() => QuestionStatistic, (stats) => stats.question)
   stats: QuestionStatistic[];
-
-  @Index()
-  @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  createdAt: Date;
-
-  @UpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
-  updatedAt: Date;
 }

@@ -4,9 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Subject } from '../../subjects/entities/subject.entity';
+import { Question } from '../../questions/entities/question.entity';
 
 @Entity('topics')
 export class Topic {
@@ -22,4 +24,7 @@ export class Topic {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @OneToMany(() => Question, (question) => question.topic)
+  questions: Question[];
 }

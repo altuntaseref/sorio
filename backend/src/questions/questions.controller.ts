@@ -9,17 +9,23 @@ import {
   Query,
   Param,
   ParseUUIDPipe,
+  Put,
 } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { UpdateQuestionDto } from './dto/update-question.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { GetQuestionsDto } from './dto/get-questions.dto';
+import { R2Service } from '../upload/r2.service';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
 export class QuestionsController {
-  constructor(private readonly questionsService: QuestionsService) {}
+  constructor(
+    private readonly questionsService: QuestionsService,
+    private readonly r2Service: R2Service,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -27,17 +33,11 @@ export class QuestionsController {
     @GetUser('id') userId: string,
     @Body() createQuestionDto: CreateQuestionDto,
   ) {
-    const question = await this.questionsService.create(
-      userId,
-      createQuestionDto,
-    );
+    const data = await this.questionsService.create(userId, createQuestionDto);
 
     return {
-      success: true,
       message: 'Question created successfully',
-      data: {
-        question,
-      },
+      data,
     };
   }
 
@@ -46,11 +46,8 @@ export class QuestionsController {
     @GetUser('id') userId: string,
     @Query() getQuestionsDto: GetQuestionsDto,
   ) {
-    const result = await this.questionsService.findAll(userId, getQuestionsDto);
-    return {
-      success: true,
-      data: result,
-    };
+    const data = await this.questionsService.findAll(userId, getQuestionsDto);
+    return { data };
   }
 
   @Get(':id')
@@ -58,12 +55,34 @@ export class QuestionsController {
     @GetUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    const question = await this.questionsService.findOne(userId, id);
+    const data = await this.questionsService.findOne(userId, id);
+    return { data };
+  }
+
+  @Put(':id')
+  async update(
+    @GetUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateQuestionDto: UpdateQuestionDto,
+  ) {
+    const { updatedQuestion, oldImageKeys } = await this.questionsService.update(
+      userId,
+      id,
+      updateQuestionDto,
+    );
+
+    if (oldImageKeys.length > 0) {
+      Promise.all(
+        oldImageKeys.map((key) => this.r2Service.deleteObject(key)),
+      ).catch((error) => {
+        // TODO: Add logging here to track if image deletion fails
+        console.error('Failed to delete old images from R2:', error);
+      });
+    }
+
     return {
-      success: true,
-      data: {
-        question,
-      },
+      message: 'Question updated successfully',
+      data: { question: updatedQuestion },
     };
   }
 }

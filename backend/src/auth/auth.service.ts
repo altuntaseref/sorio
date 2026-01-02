@@ -49,12 +49,8 @@ export class AuthService {
     const tokens = await this._generateAndSaveTokens(newUser);
 
     return {
-      success: true,
-      message: 'User registered successfully.',
-      data: {
-        user: this._toUserDto(newUser),
-        ...tokens,
-      },
+      user: this._toUserDto(newUser),
+      ...tokens,
     };
   }
 
@@ -74,12 +70,8 @@ export class AuthService {
     const tokens = await this._generateAndSaveTokens(user);
 
     return {
-      success: true,
-      message: 'Login successful.',
-      data: {
-        user: this._toUserDto(user),
-        ...tokens,
-      },
+      user: this._toUserDto(user),
+      ...tokens,
     };
   }
 
@@ -98,21 +90,11 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has expired.');
     }
 
-    const newTokens = await this._generateAndSaveTokens(user);
-
-    return {
-      success: true,
-      message: 'Tokens refreshed successfully.',
-      data: newTokens,
-    };
+    return this._generateAndSaveTokens(user);
   }
 
-  async logout(userId: string) {
+  async logout(userId: string): Promise<void> {
     await this.refreshTokenRepository.delete({ user: { id: userId } });
-    return {
-      success: true,
-      message: 'Logout successful.',
-    };
   }
 
   private async _generateAndSaveTokens(user: User) {
