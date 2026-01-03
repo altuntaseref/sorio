@@ -1,46 +1,62 @@
 { pkgs, ... }: {
-  channel = "stable-24.05"; 
+  # The channel determines which package versions are available.
+  channel = "stable-24.05"; # or "unstable"
 
-  packages = [ pkgs.postgresql_16 ];
+  # A list of packages to install from the specified channel.
+  packages = [
+    pkgs.nodejs_20
+    pkgs.postgresql_16 # For the test database
+  ];
 
-  # BURASI EKLENDİ: Terminal ve uygulamanın DB'yi nerede bulacağını bilmesi için
+  # A set of environment variables to define within the workspace.
   env = {
-    PGHOST = "127.0.0.1";
-    PGPORT = "5432";
-    PGUSER = "user"; # IDX varsayılan kullanıcısı
-    PGDATABASE = "sorio";
+    # DATABASE_URL for development, TEST_DATABASE_URL for testing
+    DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
+    TEST_DATABASE_URL = "postgres://postgres:postgres@localhost:5432/testdb";
   };
 
+  # A list of VS Code extensions to install from the Open VSX Registry.
   idx = {
-    extensions = [ "google.gemini-cli-vscode-ide-companion" ];
+    extensions = [
+      "ms-vscode.vscode-typescript-next"
+      "dbaeumer.vscode-eslint"
+    ];
 
+    # Workspace lifecycle hooks.
     workspace = {
+      # Runs when a workspace is first created.
       onCreate = {
-        default.openFiles = [ ".idx/dev.nix" "README.md" ];
-      };
-      
-      onStart = {
-        start-postgres = ''
-          # Klasör yoksa oluştur (DB ilk kurulumu)
-          if [ ! -d ".data/postgres" ]; then
-            initdb -D .data/postgres
-            
-            # Şifresiz yerel bağlantıya izin ver
-            echo "host all all 127.0.0.1/32 trust" >> .data/postgres/pg_hba.conf
-            echo "host all all ::1/128 trust" >> .data/postgres/pg_hba.conf
-            
-            # BURASI EKLENDİ: Postgres'in TCP üzerinden dinlediğinden emin ol
-            echo "listen_addresses = '*'" >> .data/postgres/postgresql.conf
-            echo "port = 5432" >> .data/postgres/postgresql.conf
+        # Install npm dependencies
+        npm-install = "cd backend && npm install";
+        # Install supertest for integration testing
+        supertest-install = "cd backend && npm install --save-dev supertest @types/supertest";
+        # Initialize postgresql and create test database
+        init-db = ''
+          export PGDATA=$PWD/.postgres/data
+          if [ ! -d "$PGDATA" ]; then
+            initdb -D $PGDATA
+            pg_ctl -D $PGDATA -l logfile start
+            createdb testdb
+            pg_ctl -D $PGDATA stop
           fi
-
-          # Sunucuyu başlat ve hazır olmasını bekle
-          # -l logfile: Hataları görmek için log dosyası oluşturur
-          pg_ctl -D .data/postgres -l .data/postgres/logfile -o "-k /tmp" start
-
-          # Veritabanını oluştur (hata verirse yoksay - zaten varsa)
-          createdb sorio || true
         '';
+      };
+
+      # Runs every time the workspace is (re)started.
+      onStart = {
+        # Start the postgresql server
+        postgres-start = "export PGDATA=$PWD/.postgres/data && pg_ctl -D $PGDATA -l logfile start";
+      };
+    };
+
+    # Configure a web preview for your application.
+    previews = {
+      enable = true;
+      previews = {
+        web = {
+          command = [ "npm" "run" "start:dev" "--" "--prefix" "backend" ];
+          manager = "web";
+        };
       };
     };
   };
