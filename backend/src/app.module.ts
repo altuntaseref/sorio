@@ -8,9 +8,8 @@ import { LoggerService } from './common/logger/logger.service';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadModule } from './upload/upload.module';
 import { QuestionsModule } from './questions/questions.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { QuestionStatistic } from './statistics/entities/question-statistic.entity';
 import { QuizzesModule } from './quizzes/quizzes.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -18,13 +17,13 @@ import { QuizzesModule } from './quizzes/quizzes.module';
       isGlobal: true,
     }),
     DatabaseModule,
-    TypeOrmModule.forFeature([QuestionStatistic]),
     UsersModule,
     AuthModule,
     SubjectsModule,
     UploadModule,
     QuestionsModule,
     QuizzesModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],

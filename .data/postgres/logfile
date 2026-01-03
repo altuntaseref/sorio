@@ -126,3 +126,22 @@
 2026-01-02 22:32:03.572 UTC [525] STATEMENT:  CREATE DATABASE sorio;
 2026-01-02 22:32:08.912 UTC [588] LOG:  invalid length of startup packet
 2026-01-02 22:32:08.966 UTC [590] LOG:  invalid length of startup packet
+2026-01-03 07:33:45.459 UTC [397] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+2026-01-03 07:33:45.465 UTC [397] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-01-03 07:33:45.476 UTC [397] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-01-03 07:33:45.506 UTC [415] LOG:  database system was interrupted; last known up at 2026-01-02 23:02:12 UTC
+2026-01-03 07:33:45.783 UTC [415] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-01-03 07:33:45.790 UTC [415] LOG:  redo starts at 0/2168B60
+2026-01-03 07:33:45.790 UTC [415] LOG:  invalid record length at 0/2168B98: expected at least 24, got 0
+2026-01-03 07:33:45.790 UTC [415] LOG:  redo done at 0/2168B60 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-01-03 07:33:45.816 UTC [413] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-01-03 07:33:45.867 UTC [413] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.011 s, sync=0.010 s, total=0.063 s; sync files=2, longest=0.008 s, average=0.005 s; distance=0 kB, estimate=0 kB; lsn=0/2168B98, redo lsn=0/2168B98
+2026-01-03 07:33:45.934 UTC [397] LOG:  database system is ready to accept connections
+2026-01-03 07:33:46.622 UTC [438] ERROR:  database "sorio" already exists
+2026-01-03 07:33:46.622 UTC [438] STATEMENT:  CREATE DATABASE sorio;
+2026-01-03 07:33:48.911 UTC [491] LOG:  invalid length of startup packet
+2026-01-03 07:33:48.947 UTC [492] LOG:  invalid length of startup packet
+2026-01-03 07:48:46.148 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 07:48:46.775 UTC [413] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.608 s, sync=0.007 s, total=0.627 s; sync files=7, longest=0.005 s, average=0.001 s; distance=5 kB, estimate=5 kB; lsn=0/216A190, redo lsn=0/216A158
+2026-01-03 07:53:46.875 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 07:53:47.601 UTC [413] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.706 s, sync=0.007 s, total=0.726 s; sync files=6, longest=0.005 s, average=0.002 s; distance=4 kB, estimate=5 kB; lsn=0/216B1B0, redo lsn=0/216B178

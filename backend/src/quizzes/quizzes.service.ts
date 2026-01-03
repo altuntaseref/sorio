@@ -11,6 +11,8 @@ import { QuizSession } from './entities/quiz-session.entity';
 import { Question } from '../questions/entities/question.entity';
 import { Subject } from '../subjects/entities/subject.entity';
 import { Topic } from '../topics/entities/topic.entity';
+import { SubmitAnswerDto } from './dto/submit-answer.dto';
+import { QuizAnswer } from './entities/quiz-answer.entity';
 
 @Injectable()
 export class QuizzesService {
@@ -23,6 +25,8 @@ export class QuizzesService {
     private subjectRepository: Repository<Subject>,
     @InjectRepository(Topic)
     private topicRepository: Repository<Topic>,
+    @InjectRepository(QuizAnswer)
+    private quizAnswerRepository: Repository<QuizAnswer>,
   ) {}
 
   async startQuiz(userId: string, startQuizDto: StartQuizDto) {
@@ -122,6 +126,51 @@ export class QuizzesService {
         id: q.id,
         questionImageUrl: q.questionImageUrl,
       })),
+    };
+  }
+
+  async submitAnswer(quizId: string, userId: string, submitAnswerDto: SubmitAnswerDto) {
+    const { questionId, userAnswer } = submitAnswerDto;
+
+    const quizSession = await this.quizSessionRepository.findOne({ where: { id: quizId, userId }});
+
+    if (!quizSession) {
+      throw new NotFoundException('Quiz session not found');
+    }
+
+    const question = await this.questionRepository.findOne({ where: { id: questionId } });
+
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+
+    const isCorrect = question.correctAnswer === userAnswer;
+
+    const quizAnswer = this.quizAnswerRepository.create({
+      quizSessionId: quizId,
+      questionId,
+      userAnswer,
+      isCorrect,
+    });
+
+    await this.quizAnswerRepository.save(quizAnswer);
+
+    if (isCorrect) {
+      quizSession.correctCount++;
+    } else {
+      quizSession.incorrectCount++;
+    }
+
+    const updatedQuizSession = await this.quizSessionRepository.save(quizSession);
+
+    return {
+      isCorrect,
+      correctAnswer: question.correctAnswer,
+      stats: {
+        totalAnswered: updatedQuizSession.correctCount + updatedQuizSession.incorrectCount,
+        correctCount: updatedQuizSession.correctCount,
+        incorrectCount: updatedQuizSession.incorrectCount,
+      }
     };
   }
 }
