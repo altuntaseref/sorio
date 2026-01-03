@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Repository, DataSource } from 'typeorm';
 import { StartQuizDto } from './dto/start-quiz.dto';
 import { QuizSession } from './entities/quiz-session.entity';
 import { Question } from '../questions/entities/question.entity';
@@ -13,6 +13,8 @@ import { Subject } from '../subjects/entities/subject.entity';
 import { Topic } from '../topics/entities/topic.entity';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { QuizAnswer } from './entities/quiz-answer.entity';
+import { DailyStatistic } from '../statistics/entities/daily-statistic.entity';
+import { QuestionStatistic } from '../statistics/entities/question-statistic.entity';
 
 @Injectable()
 export class QuizzesService {
@@ -27,6 +29,11 @@ export class QuizzesService {
     private topicRepository: Repository<Topic>,
     @InjectRepository(QuizAnswer)
     private quizAnswerRepository: Repository<QuizAnswer>,
+    @InjectRepository(DailyStatistic)
+    private dailyStatisticRepository: Repository<DailyStatistic>,
+    @InjectRepository(QuestionStatistic)
+    private questionStatisticRepository: Repository<QuestionStatistic>,
+    private dataSource: DataSource,
   ) {}
 
   async startQuiz(userId: string, startQuizDto: StartQuizDto) {
@@ -115,6 +122,8 @@ export class QuizzesService {
       userId,
       mode,
       totalQuestions: shuffledQuestions.length,
+      correctCount: 0,
+      incorrectCount: 0,
     });
 
     await this.quizSessionRepository.save(quizSession);
@@ -160,9 +169,9 @@ export class QuizzesService {
     await this.quizAnswerRepository.save(quizAnswer);
 
     if (isCorrect) {
-      quizSession.correctCount++;
+      quizSession.correctCount = (quizSession.correctCount ?? 0) + 1;
     } else {
-      quizSession.incorrectCount++;
+      quizSession.incorrectCount = (quizSession.incorrectCount ?? 0) + 1;
     }
 
     const updatedQuizSession = await this.quizSessionRepository.save(quizSession);
@@ -179,35 +188,96 @@ export class QuizzesService {
   }
 
   async completeQuiz(quizId: string, userId: string) {
-    const quizSession = await this.quizSessionRepository.findOne({ where: { id: quizId } });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (!quizSession) {
-      throw new NotFoundException('Quiz session not found');
+    try {
+      const quizSession = await queryRunner.manager.findOne(QuizSession, {
+        where: { id: quizId, userId },
+        relations: ['answers'],
+      });
+
+      if (!quizSession) {
+        throw new NotFoundException('Quiz session not found');
+      }
+
+      if (quizSession.completedAt) {
+        throw new BadRequestException('Quiz session is already completed');
+      }
+
+      quizSession.completedAt = new Date();
+      await queryRunner.manager.save(quizSession);
+
+      const today = new Date().toISOString().split('T')[0];
+      let dailyStat = await queryRunner.manager.findOne(DailyStatistic, {
+        where: { userId, date: today },
+      });
+
+      if (!dailyStat) {
+        dailyStat = this.dailyStatisticRepository.create({
+          userId,
+          date: today,
+          questionsSolved: 0,
+          correctCount: 0,
+          incorrectCount: 0,
+        });
+      }
+
+      dailyStat.questionsSolved = (dailyStat.questionsSolved ?? 0) + quizSession.totalQuestions;
+      dailyStat.correctCount = (dailyStat.correctCount ?? 0) + quizSession.correctCount;
+      dailyStat.incorrectCount = (dailyStat.incorrectCount ?? 0) + quizSession.incorrectCount;
+      await queryRunner.manager.save(dailyStat);
+
+      for (const answer of quizSession.answers) {
+        let questionStat = await queryRunner.manager.findOne(
+          QuestionStatistic,
+          {
+            where: { userId, questionId: answer.questionId },
+          },
+        );
+
+        if (!questionStat) {
+          questionStat = this.questionStatisticRepository.create({
+            userId,
+            questionId: answer.questionId,
+            totalAttempts: 0,
+            correctCount: 0,
+            incorrectCount: 0,
+          });
+        }
+
+        questionStat.totalAttempts = (questionStat.totalAttempts ?? 0) + 1;
+        if (answer.isCorrect) {
+          questionStat.correctCount = (questionStat.correctCount ?? 0) + 1;
+        } else {
+          questionStat.incorrectCount = (questionStat.incorrectCount ?? 0) + 1;
+        }
+        questionStat.lastAttemptedAt = new Date();
+        await queryRunner.manager.save(questionStat);
+      }
+
+      await queryRunner.commitTransaction();
+
+      const accuracy =
+        quizSession.totalQuestions > 0
+          ? (quizSession.correctCount / quizSession.totalQuestions) * 100
+          : 0;
+
+      return {
+        quizId: quizSession.id,
+        totalQuestions: quizSession.totalQuestions,
+        correctCount: quizSession.correctCount,
+        incorrectCount: quizSession.incorrectCount,
+        accuracy: parseFloat(accuracy.toFixed(2)),
+        completedAt: quizSession.completedAt.toISOString(),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    if (quizSession.userId !== userId) {
-      throw new ForbiddenException('You are not authorized to complete this quiz');
-    }
-
-    if (quizSession.completedAt) {
-      throw new BadRequestException('Quiz session is already completed');
-    }
-
-    quizSession.completedAt = new Date();
-    const updatedQuizSession = await this.quizSessionRepository.save(quizSession);
-
-    const accuracy = updatedQuizSession.totalQuestions > 0
-      ? (updatedQuizSession.correctCount / updatedQuizSession.totalQuestions) * 100
-      : 0;
-
-    return {
-      quizId: updatedQuizSession.id,
-      totalQuestions: updatedQuizSession.totalQuestions,
-      correctCount: updatedQuizSession.correctCount,
-      incorrectCount: updatedQuizSession.incorrectCount,
-      accuracy: parseFloat(accuracy.toFixed(2)),
-      completedAt: updatedQuizSession.completedAt.toISOString(),
-    };
   }
 
   async getQuiz(quizId: string, userId: string) {

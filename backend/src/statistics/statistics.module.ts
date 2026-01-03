@@ -5,5 +5,6 @@ import { QuestionStatistic } from './entities/question-statistic.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([DailyStatistic, QuestionStatistic])],
+  providers: [],
 })
 export class StatisticsModule {}

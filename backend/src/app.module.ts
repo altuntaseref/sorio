@@ -10,6 +10,7 @@ import { UploadModule } from './upload/upload.module';
 import { QuestionsModule } from './questions/questions.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { StatisticsModule } from './statistics/statistics.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { StatisticsModule } from './statistics/statistics.module';
     QuestionsModule,
     QuizzesModule,
     StatisticsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],
