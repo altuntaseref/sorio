@@ -138,6 +138,10 @@ export class QuizzesService {
       throw new NotFoundException('Quiz session not found');
     }
 
+    if (quizSession.completedAt) {
+      throw new BadRequestException('Quiz session is already completed');
+    }
+
     const question = await this.questionRepository.findOne({ where: { id: questionId } });
 
     if (!question) {
@@ -171,6 +175,74 @@ export class QuizzesService {
         correctCount: updatedQuizSession.correctCount,
         incorrectCount: updatedQuizSession.incorrectCount,
       }
+    };
+  }
+
+  async completeQuiz(quizId: string, userId: string) {
+    const quizSession = await this.quizSessionRepository.findOne({ where: { id: quizId } });
+
+    if (!quizSession) {
+      throw new NotFoundException('Quiz session not found');
+    }
+
+    if (quizSession.userId !== userId) {
+      throw new ForbiddenException('You are not authorized to complete this quiz');
+    }
+
+    if (quizSession.completedAt) {
+      throw new BadRequestException('Quiz session is already completed');
+    }
+
+    quizSession.completedAt = new Date();
+    const updatedQuizSession = await this.quizSessionRepository.save(quizSession);
+
+    const accuracy = updatedQuizSession.totalQuestions > 0
+      ? (updatedQuizSession.correctCount / updatedQuizSession.totalQuestions) * 100
+      : 0;
+
+    return {
+      quizId: updatedQuizSession.id,
+      totalQuestions: updatedQuizSession.totalQuestions,
+      correctCount: updatedQuizSession.correctCount,
+      incorrectCount: updatedQuizSession.incorrectCount,
+      accuracy: parseFloat(accuracy.toFixed(2)),
+      completedAt: updatedQuizSession.completedAt.toISOString(),
+    };
+  }
+
+  async getQuiz(quizId: string, userId: string) {
+    const quizSession = await this.quizSessionRepository.findOne({
+      where: { id: quizId },
+      relations: ['answers', 'answers.question'],
+    });
+
+    if (!quizSession) {
+      throw new NotFoundException('Quiz session not found');
+    }
+
+    if (quizSession.userId !== userId) {
+      throw new ForbiddenException('You are not authorized to view this quiz');
+    }
+    
+    // Sanitize the questions to only return the required fields
+    const sanitizedAnswers = quizSession.answers.map(answer => ({
+      id: answer.id,
+      questionId: answer.questionId,
+      userAnswer: answer.userAnswer,
+      isCorrect: answer.isCorrect,
+      answeredAt: answer.answeredAt,
+      question: {
+        id: answer.question.id,
+        questionImageUrl: answer.question.questionImageUrl,
+        correctAnswer: answer.question.correctAnswer,
+      },
+    }));
+
+    return {
+        quiz: {
+            ...quizSession,
+            answers: sanitizedAnswers
+        }
     };
   }
 }

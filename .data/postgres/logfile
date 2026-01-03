@@ -145,3 +145,12 @@
 2026-01-03 07:48:46.775 UTC [413] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.608 s, sync=0.007 s, total=0.627 s; sync files=7, longest=0.005 s, average=0.001 s; distance=5 kB, estimate=5 kB; lsn=0/216A190, redo lsn=0/216A158
 2026-01-03 07:53:46.875 UTC [413] LOG:  checkpoint starting: time
 2026-01-03 07:53:47.601 UTC [413] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.706 s, sync=0.007 s, total=0.726 s; sync files=6, longest=0.005 s, average=0.002 s; distance=4 kB, estimate=5 kB; lsn=0/216B1B0, redo lsn=0/216B178
+2026-01-03 07:58:46.647 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 07:58:47.173 UTC [413] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.505 s, sync=0.007 s, total=0.526 s; sync files=6, longest=0.005 s, average=0.001 s; distance=6 kB, estimate=6 kB; lsn=0/216CA40, redo lsn=0/216CA08
+2026-01-03 08:02:53.850 UTC [7234] ERROR:  invalid input syntax for type uuid: "{{quizId}}"
+2026-01-03 08:02:53.850 UTC [7234] CONTEXT:  unnamed portal parameter $1 = '...'
+2026-01-03 08:02:53.850 UTC [7234] STATEMENT:  SELECT "QuizSession"."id" AS "QuizSession_id", "QuizSession"."user_id" AS "QuizSession_user_id", "QuizSession"."mode" AS "QuizSession_mode", "QuizSession"."started_at" AS "QuizSession_started_at", "QuizSession"."completed_at" AS "QuizSession_completed_at", "QuizSession"."total_questions" AS "QuizSession_total_questions", "QuizSession"."correct_count" AS "QuizSession_correct_count", "QuizSession"."incorrect_count" AS "QuizSession_incorrect_count" FROM "quiz_sessions" "QuizSession" WHERE (("QuizSession"."id" = $1)) LIMIT 1
+2026-01-03 08:03:46.268 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:03:46.724 UTC [413] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.405 s, sync=0.011 s, total=0.457 s; sync files=5, longest=0.009 s, average=0.003 s; distance=6 kB, estimate=6 kB; lsn=0/216E360, redo lsn=0/216E328
+2026-01-03 08:08:46.824 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:08:47.349 UTC [413] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.505 s, sync=0.006 s, total=0.526 s; sync files=6, longest=0.005 s, average=0.001 s; distance=5 kB, estimate=6 kB; lsn=0/216FAC8, redo lsn=0/216FA90
