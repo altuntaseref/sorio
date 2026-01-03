@@ -15144,3 +15144,52 @@
 2026-01-03 08:54:49.353 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
 2026-01-03 08:54:49.353 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
 2026-01-03 08:54:49.353 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:50.354 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:50.374 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:50.374 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:50.374 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:50.374 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:50.374 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:50.374 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:51.374 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:51.384 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:51.384 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:51.384 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:51.384 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:51.384 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:51.384 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:52.386 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:52.400 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:52.400 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:52.400 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:52.400 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:52.400 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:52.400 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:53.400 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:53.410 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:53.410 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:53.410 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:53.410 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:53.410 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:53.410 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:54.410 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:54.420 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:54.420 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:54.420 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:54.420 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:54.420 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:54.420 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:55.421 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:55.429 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:55.429 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:55.429 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:55.429 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:55.429 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:55.429 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
+2026-01-03 08:54:56.430 UTC [413] LOG:  checkpoint starting: time
+2026-01-03 08:54:56.440 UTC [413] LOG:  request to flush past end of generated WAL; request 0/22ECD58, current position 0/21AE2B0
+2026-01-03 08:54:56.440 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:56.440 UTC [413] ERROR:  xlog flush request 0/22ECD58 is not satisfied --- flushed only to 0/21AE2B0
+2026-01-03 08:54:56.440 UTC [413] CONTEXT:  writing block 0 of relation base/24727/1249_vm
+2026-01-03 08:54:56.440 UTC [413] WARNING:  could not write block 0 of base/24727/1249_vm
+2026-01-03 08:54:56.440 UTC [413] DETAIL:  Multiple failures --- write error might be permanent.
