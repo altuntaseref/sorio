@@ -6,8 +6,6 @@ export class AnalyticsService {
   constructor(private readonly dataSource: DataSource) {}
 
   async getAnalyticsOverview(userId: string) {
-    await this.dataSource.query('REFRESH MATERIALIZED VIEW weekly_activity');
-
     const totalStatsQuery = this.dataSource.query(
       `
       SELECT
@@ -133,8 +131,6 @@ export class AnalyticsService {
   }
 
   async getWeeklyActivity(userId: string, weeks: number) {
-    await this.dataSource.query('REFRESH MATERIALIZED VIEW weekly_activity');
-
     const weeklyActivityRaw: any[] = await this.dataSource.query(
       'SELECT * FROM weekly_activity WHERE user_id = $1 ORDER BY week_start DESC LIMIT $2',
       [userId, weeks],

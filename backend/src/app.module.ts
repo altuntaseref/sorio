@@ -11,12 +11,15 @@ import { QuestionsModule } from './questions/questions.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     UsersModule,
     AuthModule,
@@ -26,6 +29,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     QuizzesModule,
     StatisticsModule,
     AnalyticsModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],
