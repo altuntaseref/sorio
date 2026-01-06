@@ -12,7 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         migrationsTableName: 'migrations',
-        synchronize: false, // Disable synchronize to use migrations
+        synchronize: true, // Disable synchronize to use migrations
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],

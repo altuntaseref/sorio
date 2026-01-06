@@ -8,11 +8,10 @@ import { User } from './entities/user.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // Note: This existing endpoint might need adjustment if it conflicts with a /me route.
-  // For now, we assume it's for general user profiles, not the logged-in user's.
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
+  @Get('me')
   getProfile(@GetUser() user: User) {
+    delete user.password;
     return user;
   }
 
