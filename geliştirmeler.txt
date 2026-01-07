@@ -1,0 +1,5 @@
+- Quiz kısmında bir soruda ne kadar vakit harcandığını kaydedelim.
+Bu işlemi yaparken kullanıcının soruyu kaç kez gördüğü de bulunsun.
+Örn. Kullanıcı soruyu ilk gördüğünde 2 dk geçirmiş. ama 5. kez gördüğünde
+30 saniyede doğru cevaplamış. Yanlış cevaplanan sorular için süre tutmamıza gerek yok.
+

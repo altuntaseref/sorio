@@ -38,6 +38,15 @@ export class SubjectsController {
     };
   }
 
+  @Post('custom')
+  async createCustom(
+    @Body() createSubjectDto: CreateSubjectDto,
+    @GetUser() user: User,
+  ) {
+    // Same as create endpoint, just an alias for /custom
+    return this.create(createSubjectDto, user);
+  }
+
   @Post(':subjectId/topics')
   async addTopic(
     @Param('subjectId', ParseUUIDPipe) subjectId: string,

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   S3Client,
   PutObjectCommand,
+  GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -24,8 +25,7 @@ export class R2Service {
       !accountId ||
       !accessKeyId ||
       !secretAccessKey ||
-      !bucketName ||
-      !publicUrl
+      !bucketName
     ) {
       throw new Error('Missing Cloudflare R2 environment variables');
     }
@@ -39,7 +39,8 @@ export class R2Service {
       },
     });
     this.bucketName = bucketName;
-    this.publicUrl = publicUrl;
+    // R2_PUBLIC_URL opsiyonel - yoksa presigned GET URL kullanılacak
+    this.publicUrl = publicUrl || '';
   }
 
   generateFileKey(
@@ -56,14 +57,28 @@ export class R2Service {
     contentType: string,
     expiresIn: number = 900,
   ): Promise<{ uploadUrl: string; publicUrl: string; key: string }> {
-    const command = new PutObjectCommand({
+    // Presigned URL for uploading (PUT)
+    const putCommand = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
       ContentType: contentType,
     });
 
-    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
-    const publicUrl = `${this.publicUrl}/${key}`;
+    const uploadUrl = await getSignedUrl(this.s3Client, putCommand, { expiresIn });
+
+    // Public URL: R2_PUBLIC_URL varsa kullan, yoksa presigned GET URL kullan (SSL sorunlarını önler)
+    let publicUrl: string;
+    if (this.publicUrl && this.publicUrl.startsWith('https://')) {
+      // Custom domain veya doğru yapılandırılmış public URL kullan
+      publicUrl = `${this.publicUrl.replace(/\/$/, '')}/${key}`;
+    } else {
+      // Presigned GET URL kullan (SSL sorunlarını önler, 1 yıl geçerli)
+      const getCommand = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+      publicUrl = await getSignedUrl(this.s3Client, getCommand, { expiresIn: 31536000 });
+    }
 
     return { uploadUrl, publicUrl, key };
   }

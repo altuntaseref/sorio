@@ -1,0 +1,292 @@
+{
+  "quiz_api_examples": {
+    "1_start_quiz": {
+      "endpoint": "POST /api/quiz/start",
+      "request": {
+        "mode": "learning",
+        "subjectIds": ["550e8400-e29b-41d4-a716-446655440000"],
+        "topicIds": ["660e8400-e29b-41d4-a716-446655440001"]
+      },
+      "response_success": {
+        "success": true,
+        "data": {
+          "quizId": "880e8400-e29b-41d4-a716-446655440003",
+          "totalQuestions": 10,
+          "questions": [
+            {
+              "id": "770e8400-e29b-41d4-a716-446655440002",
+              "questionImageUrl": "https://img.bddtechnology.com/questions/user-id/1704567890123-question.jpg"
+            },
+            {
+              "id": "770e8400-e29b-41d4-a716-446655440003",
+              "questionImageUrl": "https://img.bddtechnology.com/questions/user-id/1704567890124-question.jpg"
+            }
+          ]
+        }
+      },
+      "response_error_400": {
+        "statusCode": 400,
+        "message": "At least one subjectId or topicId must be provided",
+        "error": "Bad Request"
+      },
+      "response_error_404": {
+        "statusCode": 404,
+        "message": "No questions found matching your criteria",
+        "error": "Not Found"
+      }
+    },
+    "2_submit_answer": {
+      "endpoint": "POST /api/quiz/:quizId/answer",
+      "request": {
+        "questionId": "770e8400-e29b-41d4-a716-446655440002",
+        "userAnswer": "A"
+      },
+      "response_success": {
+        "success": true,
+        "data": {
+          "isCorrect": true,
+          "correctAnswer": "A",
+          "stats": {
+            "totalAnswered": 5,
+            "correctCount": 4,
+            "incorrectCount": 1
+          }
+        }
+      },
+      "response_error_400": {
+        "statusCode": 400,
+        "message": "Quiz session is already completed",
+        "error": "Bad Request"
+      },
+      "response_error_404": {
+        "statusCode": 404,
+        "message": "Quiz session not found",
+        "error": "Not Found"
+      }
+    },
+    "3_complete_quiz": {
+      "endpoint": "POST /api/quiz/:quizId/complete",
+      "request": {},
+      "response_success": {
+        "success": true,
+        "data": {
+          "quizId": "880e8400-e29b-41d4-a716-446655440003",
+          "totalQuestions": 10,
+          "correctCount": 8,
+          "incorrectCount": 2,
+          "accuracy": 80.00,
+          "completedAt": "2026-01-06T22:30:00.000Z"
+        }
+      },
+      "response_error_400": {
+        "statusCode": 400,
+        "message": "Quiz session is already completed",
+        "error": "Bad Request"
+      },
+      "response_error_404": {
+        "statusCode": 404,
+        "message": "Quiz session not found",
+        "error": "Not Found"
+      }
+    },
+    "4_get_quiz": {
+      "endpoint": "GET /api/quiz/:quizId",
+      "request": {},
+      "response_success": {
+        "success": true,
+        "data": {
+          "quiz": {
+            "id": "880e8400-e29b-41d4-a716-446655440003",
+            "userId": "990e8400-e29b-41d4-a716-446655440004",
+            "mode": "learning",
+            "startedAt": "2026-01-06T22:00:00.000Z",
+            "completedAt": "2026-01-06T22:30:00.000Z",
+            "totalQuestions": 10,
+            "correctCount": 8,
+            "incorrectCount": 2,
+            "answers": [
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440005",
+                "questionId": "770e8400-e29b-41d4-a716-446655440002",
+                "userAnswer": "A",
+                "isCorrect": true,
+                "answeredAt": "2026-01-06T22:05:00.000Z",
+                "question": {
+                  "id": "770e8400-e29b-41d4-a716-446655440002",
+                  "questionImageUrl": "https://img.bddtechnology.com/questions/user-id/1704567890123-question.jpg",
+                  "correctAnswer": "A"
+                }
+              },
+              {
+                "id": "bb0e8400-e29b-41d4-a716-446655440006",
+                "questionId": "770e8400-e29b-41d4-a716-446655440003",
+                "userAnswer": "B",
+                "isCorrect": false,
+                "answeredAt": "2026-01-06T22:10:00.000Z",
+                "question": {
+                  "id": "770e8400-e29b-41d4-a716-446655440003",
+                  "questionImageUrl": "https://img.bddtechnology.com/questions/user-id/1704567890124-question.jpg",
+                  "correctAnswer": "C"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "response_error_403": {
+        "statusCode": 403,
+        "message": "You are not authorized to view this quiz",
+        "error": "Forbidden"
+      },
+      "response_error_404": {
+        "statusCode": 404,
+        "message": "Quiz session not found",
+        "error": "Not Found"
+      }
+    },
+    "common_errors": {
+      "401_unauthorized": {
+        "statusCode": 401,
+        "message": "Unauthorized"
+      },
+      "403_forbidden": {
+        "statusCode": 403,
+        "message": "You do not have access to subject with ID xxx",
+        "error": "Forbidden"
+      },
+      "validation_error": {
+        "statusCode": 400,
+        "message": [
+          "mode must be one of the following values: learning, wrong-answers",
+          "subjectIds must be an array",
+          "subjectIds must be a UUID"
+        ],
+        "error": "Bad Request"
+      }
+    },
+    "request_examples": {
+      "start_quiz_learning_mode": {
+        "mode": "learning",
+        "subjectIds": ["550e8400-e29b-41d4-a716-446655440000"],
+        "topicIds": ["660e8400-e29b-41d4-a716-446655440001"]
+      },
+      "start_quiz_wrong_answers_mode": {
+        "mode": "wrong-answers",
+        "subjectIds": ["550e8400-e29b-41d4-a716-446655440000"]
+      },
+      "start_quiz_only_subjects": {
+        "mode": "learning",
+        "subjectIds": [
+          "550e8400-e29b-41d4-a716-446655440000",
+          "550e8400-e29b-41d4-a716-446655440001"
+        ]
+      },
+      "start_quiz_only_topics": {
+        "mode": "learning",
+        "topicIds": [
+          "660e8400-e29b-41d4-a716-446655440001",
+          "660e8400-e29b-41d4-a716-446655440002"
+        ]
+      },
+      "submit_answer_correct": {
+        "questionId": "770e8400-e29b-41d4-a716-446655440002",
+        "userAnswer": "A"
+      },
+      "submit_answer_incorrect": {
+        "questionId": "770e8400-e29b-41d4-a716-446655440002",
+        "userAnswer": "B"
+      }
+    },
+    "response_examples": {
+      "start_quiz_minimal": {
+        "success": true,
+        "data": {
+          "quizId": "880e8400-e29b-41d4-a716-446655440003",
+          "totalQuestions": 1,
+          "questions": [
+            {
+              "id": "770e8400-e29b-41d4-a716-446655440002",
+              "questionImageUrl": "https://img.bddtechnology.com/questions/user-id/1704567890123-question.jpg"
+            }
+          ]
+        }
+      },
+      "submit_answer_first_question": {
+        "success": true,
+        "data": {
+          "isCorrect": true,
+          "correctAnswer": "A",
+          "stats": {
+            "totalAnswered": 1,
+            "correctCount": 1,
+            "incorrectCount": 0
+          }
+        }
+      },
+      "submit_answer_mid_quiz": {
+        "success": true,
+        "data": {
+          "isCorrect": false,
+          "correctAnswer": "C",
+          "stats": {
+            "totalAnswered": 5,
+            "correctCount": 3,
+            "incorrectCount": 2
+          }
+        }
+      },
+      "complete_quiz_perfect_score": {
+        "success": true,
+        "data": {
+          "quizId": "880e8400-e29b-41d4-a716-446655440003",
+          "totalQuestions": 10,
+          "correctCount": 10,
+          "incorrectCount": 0,
+          "accuracy": 100.00,
+          "completedAt": "2026-01-06T22:30:00.000Z"
+        }
+      },
+      "complete_quiz_failed": {
+        "success": true,
+        "data": {
+          "quizId": "880e8400-e29b-41d4-a716-446655440003",
+          "totalQuestions": 10,
+          "correctCount": 0,
+          "incorrectCount": 10,
+          "accuracy": 0.00,
+          "completedAt": "2026-01-06T22:30:00.000Z"
+        }
+      },
+      "get_quiz_in_progress": {
+        "success": true,
+        "data": {
+          "quiz": {
+            "id": "880e8400-e29b-41d4-a716-446655440003",
+            "userId": "990e8400-e29b-41d4-a716-446655440004",
+            "mode": "learning",
+            "startedAt": "2026-01-06T22:00:00.000Z",
+            "completedAt": null,
+            "totalQuestions": 10,
+            "correctCount": 5,
+            "incorrectCount": 2,
+            "answers": [
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440005",
+                "questionId": "770e8400-e29b-41d4-a716-446655440002",
+                "userAnswer": "A",
+                "isCorrect": true,
+                "answeredAt": "2026-01-06T22:05:00.000Z",
+                "question": {
+                  "id": "770e8400-e29b-41d4-a716-446655440002",
+                  "questionImageUrl": "https://img.bddtechnology.com/questions/user-id/1704567890123-question.jpg",
+                  "correctAnswer": "A"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
