@@ -62,7 +62,7 @@ export class MotivationService {
           ll.last_login
         FROM users u
         LEFT JOIN (
-          SELECT user_id, MAX(login_time) as last_login
+          SELECT user_id, MAX(created_at) as last_login
           FROM login_logs
           WHERE user_id = $1
           GROUP BY user_id
@@ -105,10 +105,10 @@ export class MotivationService {
       const streakInfo = await this.dataSource.query(
         `
         SELECT 
-          COUNT(DISTINCT DATE(login_time)) as consecutive_days
+          COUNT(DISTINCT DATE(created_at)) as consecutive_days
         FROM login_logs
         WHERE user_id = $1
-        AND login_time >= NOW() - INTERVAL '7 days'
+        AND created_at >= NOW() - INTERVAL '7 days'
       `,
         [userId],
       );

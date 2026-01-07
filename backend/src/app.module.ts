@@ -14,6 +14,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { MotivationModule } from './motivation/motivation.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MotivationModule } from './motivation/motivation.module';
     AnalyticsModule,
     SchedulerModule,
     MotivationModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],
