@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { MotivationService } from '../motivation/motivation.service';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly motivationService: MotivationService,
+  ) {}
 
   async getAnalyticsOverview(userId: string) {
     try {
@@ -110,6 +114,9 @@ export class AnalyticsService {
             : 0,
       }));
 
+      // Motivasyon mesajını al
+      const motivation = await this.motivationService.getMotivationForUser(userId);
+
       return {
         totalQuestionsSolved: Number(totalStats.totalQuestionsSolved || 0),
         totalCorrect: Number(totalStats.totalCorrect || 0),
@@ -118,6 +125,7 @@ export class AnalyticsService {
         totalQuestionsAdded: Number(totalQuestionsAdded),
         weeklyActivity,
         subjectBreakdown,
+        motivation,
       };
     } catch (error) {
       // Return empty/default data if any error occurs
@@ -129,6 +137,11 @@ export class AnalyticsService {
         totalQuestionsAdded: 0,
         weeklyActivity: [],
         subjectBreakdown: [],
+        motivation: {
+          title: 'Başarıya Giden Yoldasın! 🚀',
+          message: 'Her gün biraz daha ilerliyorsun!',
+          type: 'general',
+        },
       };
     }
   }
