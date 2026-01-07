@@ -35,8 +35,14 @@ export class QuestionStatistic {
   @Column({ name: 'incorrect_count', default: 0 })
   incorrectCount: number;
 
+  @Column({ name: 'mastery_level', type: 'int', default: 0 })
+  masteryLevel: number; // 0-5 arası: 0=Yeni, 5=Ezberlendi
+
   @Column({ type: 'timestamp', name: 'last_attempted_at', nullable: true })
   lastAttemptedAt: Date;
+
+  @Column({ type: 'timestamp', name: 'next_review_at', nullable: true })
+  nextReviewAt: Date; // Bir sonraki tekrar tarihi
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

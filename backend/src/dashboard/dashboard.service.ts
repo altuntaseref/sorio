@@ -44,30 +44,30 @@ export class DashboardService {
         `
         SELECT 
           -- 1. Eklenen toplam soru
-          (SELECT COUNT(*)::int FROM questions WHERE user_id = $1) as "totalQuestionsAdded",
+          (SELECT COUNT(*)::int FROM questions WHERE user_id = $1::uuid) as "totalQuestionsAdded",
           
           -- 2. Quiz'de çözülen toplam soru sayısı (unique)
           (SELECT COUNT(DISTINCT qa.question_id)::int 
            FROM quiz_answers qa
            INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-           WHERE qs.user_id = $1) as "totalQuestionsSolved",
+           WHERE qs.user_id = $1::uuid) as "totalQuestionsSolved",
           
           -- 3. Toplam doğru cevaplar
           (SELECT COUNT(*)::int 
            FROM quiz_answers qa
            INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-           WHERE qs.user_id = $1 AND qa.is_correct = true) as "totalCorrect",
+           WHERE qs.user_id = $1::uuid AND qa.is_correct = true) as "totalCorrect",
            
           -- 4. Toplam yanlış cevaplar
           (SELECT COUNT(*)::int 
            FROM quiz_answers qa
            INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-           WHERE qs.user_id = $1 AND qa.is_correct = false) as "totalIncorrect",
+           WHERE qs.user_id = $1::uuid AND qa.is_correct = false) as "totalIncorrect",
           
           -- 5. Bu hafta eklenen sorular
           (SELECT COUNT(*)::int 
            FROM questions 
-           WHERE user_id = $1 
+           WHERE user_id = $1::uuid 
            AND created_at >= CURRENT_DATE - INTERVAL '7 days') as "weeklyQuestionsAdded"
       `,
         [userId],
@@ -88,9 +88,9 @@ export class DashboardService {
         const streakResult = await this.dataSource.query(
           `
           WITH daily_logins AS (
-            SELECT DISTINCT DATE(login_time) as login_date
+            SELECT DISTINCT DATE(created_at) as login_date
             FROM login_logs
-            WHERE user_id = $1
+            WHERE user_id = $1::uuid
             ORDER BY login_date DESC
           )
           SELECT COUNT(*) as streak
@@ -161,17 +161,17 @@ export class DashboardService {
           COALESCE(SUM(CASE WHEN qa.is_correct = true THEN 1 ELSE 0 END), 0) as "correctCount",
           COALESCE(SUM(CASE WHEN qa.is_correct = false THEN 1 ELSE 0 END), 0) as "incorrectCount",
           
-          -- Mastered sorular (question_statistics'ten: 3+ doğru, 0 yanlış)
+          -- Mastered sorular (question_statistics'ten: mastery_level >= 3)
           COUNT(DISTINCT CASE 
-            WHEN qs.correct_count >= 3 AND qs.incorrect_count = 0 
+            WHEN qs.mastery_level >= 3
             THEN qs.question_id 
           END) as "masteredCount"
           
         FROM subjects s
-        INNER JOIN questions q ON s.id = q.subject_id AND q.user_id = $1
+        INNER JOIN questions q ON s.id = q.subject_id AND q.user_id = $1::uuid
         LEFT JOIN quiz_answers qa ON q.id = qa.question_id
-        LEFT JOIN quiz_sessions qsess ON qa.quiz_session_id = qsess.id AND qsess.user_id = $1
-        LEFT JOIN question_statistics qs ON q.id = qs.question_id AND qs.user_id = $1
+        LEFT JOIN quiz_sessions qsess ON qa.quiz_session_id = qsess.id AND qsess.user_id = $1::uuid
+        LEFT JOIN question_statistics qs ON q.id = qs.question_id AND qs.user_id = $1::uuid
         GROUP BY s.id, s.name
         ORDER BY "totalQuestions" DESC
       `,
@@ -220,13 +220,14 @@ export class DashboardService {
           
           -- Badge bilgileri (question_statistics'ten)
           COALESCE(qs.correct_count, 0) as correct_count,
-          COALESCE(qs.incorrect_count, 0) as incorrect_count
+          COALESCE(qs.incorrect_count, 0) as incorrect_count,
+          COALESCE(qs.mastery_level, 0) as mastery_level
           
         FROM questions q
         INNER JOIN subjects s ON q.subject_id = s.id
         LEFT JOIN topics t ON q.topic_id = t.id
         LEFT JOIN question_statistics qs ON q.id = qs.question_id AND qs.user_id = q.user_id
-        WHERE q.user_id = $1
+        WHERE q.user_id = $1::uuid
         ORDER BY q.created_at DESC
         LIMIT 10
       `,
@@ -242,8 +243,7 @@ export class DashboardService {
         createdAt: row.createdAt,
         correctAnswer: row.correctAnswer,
         badges: {
-          isMastered:
-            Number(row.correct_count) >= 3 && Number(row.incorrect_count) === 0,
+          isMastered: Number(row.mastery_level) >= 3,
           hasNoErrors: Number(row.incorrect_count) === 0,
         },
       }));
@@ -270,7 +270,7 @@ export class DashboardService {
             DATE(created_at) as date,
             COUNT(*) as count
           FROM questions
-          WHERE user_id = $1
+          WHERE user_id = $1::uuid
           AND created_at >= CURRENT_DATE - INTERVAL '6 days'
           GROUP BY DATE(created_at)
         ),
@@ -280,7 +280,7 @@ export class DashboardService {
             COUNT(DISTINCT qa.question_id) as count
           FROM quiz_answers qa
           INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-          WHERE qs.user_id = $1
+          WHERE qs.user_id = $1::uuid
           AND qa.answered_at >= CURRENT_DATE - INTERVAL '6 days'
           GROUP BY DATE(qa.answered_at)
         )
@@ -324,14 +324,16 @@ export class DashboardService {
   // 6. HIZLI ERİŞİM BİLGİLERİ
   private async getQuickStats(userId: string) {
     try {
-      // Pending reviews: Yanlış yapılan sorular
+      // Pending reviews: next_review_at <= NOW() veya mastery_level < 2 olan sorular
       const pendingResult = await this.dataSource.query(
         `
         SELECT COUNT(DISTINCT question_id)::int as count
         FROM question_statistics
-        WHERE user_id = $1
-        AND incorrect_count > 0
-        AND correct_count < 3
+        WHERE user_id = $1::uuid
+        AND (
+          (next_review_at IS NULL OR next_review_at <= NOW())
+          OR mastery_level < 2
+        )
       `,
         [userId],
       );
@@ -343,8 +345,8 @@ export class DashboardService {
         FROM subjects s
         INNER JOIN questions q ON s.id = q.subject_id
         LEFT JOIN quiz_answers qa ON q.id = qa.question_id
-        LEFT JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id AND qs.user_id = $1
-        WHERE q.user_id = $1
+        LEFT JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id AND qs.user_id = $1::uuid
+        WHERE q.user_id = $1::uuid
         GROUP BY s.id, s.name
         HAVING 
           COUNT(qa.id) > 5
@@ -356,7 +358,7 @@ export class DashboardService {
 
       // Sonraki hedef hesapla
       const totalQuestions = await this.dataSource.query(
-        `SELECT COUNT(*)::int as count FROM questions WHERE user_id = $1`,
+        `SELECT COUNT(*)::int as count FROM questions WHERE user_id = $1::uuid`,
         [userId],
       );
       const count = Number(totalQuestions[0]?.count || 0);
