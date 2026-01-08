@@ -15,6 +15,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { MotivationModule } from './motivation/motivation.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PomodoroModule } from './pomodoro/pomodoro.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     SchedulerModule,
     MotivationModule,
     DashboardModule,
+    PomodoroModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],
