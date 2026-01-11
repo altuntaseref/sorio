@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsOptional,
   IsBoolean,
+  IsUUID,
   Min,
   Max,
   MinLength,
@@ -39,13 +40,13 @@ export class CreatePomodoroPresetDto {
   @IsOptional()
   setsUntilLongBreak?: number; // Kaç sette bir uzun mola? (default: 4)
 
-  @IsString()
+  @IsUUID()
   @IsOptional()
-  backgroundImageId?: string; // Seçtiği arka plan (Local asset ID veya URL)
+  backgroundImageId?: string; // PomodoroAsset ID (IMAGE tipinde)
 
-  @IsString()
+  @IsUUID()
   @IsOptional()
-  soundId?: string; // Seçtiği ses (Rain, Fire, Silence)
+  soundId?: string; // PomodoroAsset ID (SOUND tipinde)
 
   @IsBoolean()
   @IsOptional()

@@ -9,6 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { PomodoroAsset } from './pomodoro-asset.entity';
 
 @Entity('pomodoro_presets')
 @Index(['userId'])
@@ -34,11 +35,19 @@ export class PomodoroPreset {
   @Column({ name: 'sets_until_long_break', default: 4 })
   setsUntilLongBreak: number; // Kaç sette bir uzun mola?
 
-  @Column({ name: 'background_image_id', nullable: true })
-  backgroundImageId?: string; // Seçtiği arka plan (Local asset ID veya URL)
+  @Column({ name: 'background_image_id', nullable: true, type: 'uuid' })
+  backgroundImageId?: string; // PomodoroAsset ID (IMAGE tipinde)
 
-  @Column({ name: 'sound_id', nullable: true })
-  soundId?: string; // Seçtiği ses (Rain, Fire, Silence)
+  @Column({ name: 'sound_id', nullable: true, type: 'uuid' })
+  soundId?: string; // PomodoroAsset ID (SOUND tipinde)
+
+  @ManyToOne(() => PomodoroAsset, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'background_image_id' })
+  backgroundImage?: PomodoroAsset;
+
+  @ManyToOne(() => PomodoroAsset, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sound_id' })
+  sound?: PomodoroAsset;
 
   @Column({ name: 'is_default', default: false })
   isDefault: boolean; // Varsayılan olarak bu mu açılsın?

@@ -8,9 +8,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { PomodoroPreset } from './entities/pomodoro-preset.entity';
 import { StudySession } from './entities/study-session.entity';
+import { PomodoroAsset } from './entities/pomodoro-asset.entity';
 import { CreatePomodoroPresetDto } from './dto/create-pomodoro-preset.dto';
 import { LogStudySessionDto } from './dto/log-study-session.dto';
+import { CreateAssetDto } from './dto/create-asset.dto';
+import { GetAssetsDto } from './dto/get-assets.dto';
 import { Subject } from '../subjects/entities/subject.entity';
+import { R2Service } from '../upload/r2.service';
 
 @Injectable()
 export class PomodoroService {
@@ -19,9 +23,12 @@ export class PomodoroService {
     private pomodoroPresetRepository: Repository<PomodoroPreset>,
     @InjectRepository(StudySession)
     private studySessionRepository: Repository<StudySession>,
+    @InjectRepository(PomodoroAsset)
+    private pomodoroAssetRepository: Repository<PomodoroAsset>,
     @InjectRepository(Subject)
     private subjectRepository: Repository<Subject>,
     private dataSource: DataSource,
+    private r2Service: R2Service,
   ) {}
 
   /**
@@ -41,6 +48,52 @@ export class PomodoroService {
     userId: string,
     createPresetDto: CreatePomodoroPresetDto,
   ): Promise<PomodoroPreset> {
+    // Asset ID validasyonu
+    if (createPresetDto.backgroundImageId) {
+      const backgroundAsset = await this.pomodoroAssetRepository.findOne({
+        where: { id: createPresetDto.backgroundImageId },
+      });
+
+      if (!backgroundAsset) {
+        throw new NotFoundException('Background image asset not found');
+      }
+
+      if (backgroundAsset.type !== 'IMAGE') {
+        throw new BadRequestException(
+          'Background image asset must be of type IMAGE',
+        );
+      }
+
+      // Kullanıcı sadece sistem default veya kendi asset'lerini kullanabilir
+      if (
+        !backgroundAsset.isSystemDefault &&
+        backgroundAsset.userId !== userId
+      ) {
+        throw new ForbiddenException(
+          'You do not have access to this background image',
+        );
+      }
+    }
+
+    if (createPresetDto.soundId) {
+      const soundAsset = await this.pomodoroAssetRepository.findOne({
+        where: { id: createPresetDto.soundId },
+      });
+
+      if (!soundAsset) {
+        throw new NotFoundException('Sound asset not found');
+      }
+
+      if (soundAsset.type !== 'SOUND') {
+        throw new BadRequestException('Sound asset must be of type SOUND');
+      }
+
+      // Kullanıcı sadece sistem default veya kendi asset'lerini kullanabilir
+      if (!soundAsset.isSystemDefault && soundAsset.userId !== userId) {
+        throw new ForbiddenException('You do not have access to this sound');
+      }
+    }
+
     // Eğer isDefault true ise, diğer preset'lerin isDefault'unu false yap
     if (createPresetDto.isDefault) {
       await this.pomodoroPresetRepository.update(
@@ -148,6 +201,106 @@ export class PomodoroService {
       .getRawOne();
 
     return parseInt(result?.total ?? '0', 10);
+  }
+
+  /**
+   * Asset'leri listeler (sistem default + kullanıcı asset'leri)
+   */
+  async getAssets(
+    userId: string,
+    getAssetsDto: GetAssetsDto,
+  ): Promise<PomodoroAsset[]> {
+    const query = this.pomodoroAssetRepository
+      .createQueryBuilder('asset')
+      .where(
+        '(asset.isSystemDefault = true OR asset.userId = :userId)',
+        { userId },
+      );
+
+    if (getAssetsDto.type) {
+      query.andWhere('asset.type = :type', { type: getAssetsDto.type });
+    }
+
+    return query
+      .orderBy('asset.isSystemDefault', 'DESC')
+      .addOrderBy('asset.createdAt', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Yeni asset oluşturur (kullanıcı yüklediği dosya için)
+   */
+  async createAsset(
+    userId: string,
+    createAssetDto: CreateAssetDto,
+  ): Promise<PomodoroAsset> {
+    const asset = this.pomodoroAssetRepository.create({
+      userId,
+      type: createAssetDto.type,
+      url: createAssetDto.url,
+      name: createAssetDto.name,
+      r2Key: createAssetDto.r2Key,
+      isSystemDefault: false,
+    });
+
+    return this.pomodoroAssetRepository.save(asset);
+  }
+
+  /**
+   * Asset siler (sadece kullanıcı kendi asset'ini silebilir)
+   */
+  async deleteAsset(assetId: string, userId: string): Promise<void> {
+    const asset = await this.pomodoroAssetRepository.findOne({
+      where: { id: assetId },
+    });
+
+    if (!asset) {
+      throw new NotFoundException('Asset not found');
+    }
+
+    if (asset.isSystemDefault) {
+      throw new ForbiddenException('Cannot delete system default assets');
+    }
+
+    if (asset.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this asset',
+      );
+    }
+
+    // R2'den dosyayı sil (eğer r2Key varsa)
+    if (asset.r2Key) {
+      try {
+        await this.r2Service.deleteObject(asset.r2Key);
+      } catch (error) {
+        // R2'den silme hatası olsa bile DB'den silmeye devam et
+        console.error('Error deleting asset from R2:', error);
+      }
+    }
+
+    // Preset'lerde kullanılıyor mu kontrol et
+    const presetsUsingAsset = await this.pomodoroPresetRepository.find({
+      where: [
+        { backgroundImageId: assetId },
+        { soundId: assetId },
+      ],
+    });
+
+    // Eğer preset'lerde kullanılıyorsa, preset'lerdeki referansları undefined yap
+    if (presetsUsingAsset.length > 0) {
+      for (const preset of presetsUsingAsset) {
+        if (preset.backgroundImageId === assetId) {
+          preset.backgroundImageId = undefined;
+        }
+        if (preset.soundId === assetId) {
+          preset.soundId = undefined;
+        }
+        await this.pomodoroPresetRepository.save(preset);
+      }
+    }
+
+    // Asset'i sil
+    await this.pomodoroAssetRepository.remove(asset);
   }
 }
 

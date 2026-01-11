@@ -29,3 +29,4 @@ export class LogStudySessionDto {
   status?: 'COMPLETED' | 'ABORTED'; // Yarıda mı kesti, bitirdi mi? (default: COMPLETED)
 }
 
+
