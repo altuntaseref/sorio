@@ -99,6 +99,8 @@ export class PomodoroController {
           url: asset.url,
           name: asset.name,
           isSystemDefault: asset.isSystemDefault,
+          fileSize: asset.fileSize,
+          durationSeconds: asset.durationSeconds,
           createdAt: asset.createdAt,
         })),
       },

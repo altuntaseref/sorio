@@ -58,9 +58,9 @@ export class PomodoroService {
         throw new NotFoundException('Background image asset not found');
       }
 
-      if (backgroundAsset.type !== 'IMAGE') {
+      if (backgroundAsset.type !== 'IMAGE' && backgroundAsset.type !== 'VIDEO') {
         throw new BadRequestException(
-          'Background image asset must be of type IMAGE',
+          'Background asset must be of type IMAGE or VIDEO',
         );
       }
 
@@ -234,12 +234,36 @@ export class PomodoroService {
     userId: string,
     createAssetDto: CreateAssetDto,
   ): Promise<PomodoroAsset> {
+    // Video/GIF için validasyonlar
+    if (createAssetDto.type === 'VIDEO') {
+      // Dosya boyutu kontrolü (max 10MB)
+      const maxFileSize = 10 * 1024 * 1024; // 10MB
+      if (createAssetDto.fileSize && createAssetDto.fileSize > maxFileSize) {
+        throw new BadRequestException(
+          'Video/GIF file size cannot exceed 10MB',
+        );
+      }
+
+      // Video/GIF süresi kontrolü (max 30 saniye)
+      const maxDuration = 30; // saniye
+      if (
+        createAssetDto.durationSeconds &&
+        createAssetDto.durationSeconds > maxDuration
+      ) {
+        throw new BadRequestException(
+          'Video/GIF duration cannot exceed 30 seconds',
+        );
+      }
+    }
+
     const asset = this.pomodoroAssetRepository.create({
       userId,
       type: createAssetDto.type,
       url: createAssetDto.url,
       name: createAssetDto.name,
       r2Key: createAssetDto.r2Key,
+      fileSize: createAssetDto.fileSize,
+      durationSeconds: createAssetDto.durationSeconds,
       isSystemDefault: false,
     });
 

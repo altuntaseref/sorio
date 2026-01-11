@@ -25,12 +25,37 @@ export class UploadController {
     @GetUser() user: User,
     @Query() { fileName, fileType, contentType }: GetPresignedUrlDto,
   ) {
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
+
+    // Dosya tipine göre izin verilen uzantılar
+    let allowedExtensions: string[];
+    let maxFileSize: number; // byte cinsinden
+
+    if (fileType === 'pomodoro-asset') {
+      // Pomodoro asset için: görsel, ses ve video/GIF
+      allowedExtensions = [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp',
+        'gif',
+        'mp4',
+        'webm',
+        'mov',
+        'mp3',
+        'wav',
+        'ogg',
+      ];
+      maxFileSize = 10 * 1024 * 1024; // 10MB
+    } else {
+      // Diğer dosya tipleri için sadece görsel
+      allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+      maxFileSize = 5 * 1024 * 1024; // 5MB
+    }
 
     if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
       throw new BadRequestException(
-        'Invalid or missing file extension. Only JPG, JPEG, PNG, and WEBP are allowed.',
+        `Invalid or missing file extension. Allowed extensions: ${allowedExtensions.join(', ')}`,
       );
     }
 

@@ -20,7 +20,13 @@ export class PomodoroAsset {
     type: 'varchar',
     length: 20,
   })
-  type: 'IMAGE' | 'SOUND'; // Görsel veya ses dosyası
+  type: 'IMAGE' | 'SOUND' | 'VIDEO'; // Görsel, ses veya video/GIF dosyası
+
+  @Column({ name: 'file_size', nullable: true, type: 'bigint' })
+  fileSize?: number; // Dosya boyutu (byte cinsinden)
+
+  @Column({ name: 'duration_seconds', nullable: true, type: 'integer' })
+  durationSeconds?: number; // Video/GIF süresi (saniye cinsinden, max 30 saniye)
 
   @Column({ type: 'text' })
   url: string; // Dosyanın R2/CDN adresi

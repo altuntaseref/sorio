@@ -2,8 +2,8 @@ import { IsOptional, IsIn } from 'class-validator';
 
 export class GetAssetsDto {
   @IsOptional()
-  @IsIn(['IMAGE', 'SOUND'])
-  type?: 'IMAGE' | 'SOUND'; // Filtreleme için (opsiyonel)
+  @IsIn(['IMAGE', 'SOUND', 'VIDEO'])
+  type?: 'IMAGE' | 'SOUND' | 'VIDEO'; // Filtreleme için (opsiyonel)
 }
 
 
