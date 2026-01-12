@@ -96,3 +96,16 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+SES EKLEME
+INSERT INTO pomodoro_assets (
+  id, type, url, name, is_system_default, user_id, created_at
+) VALUES (
+  gen_random_uuid(),
+  'SOUND',
+  'https://your-cdn.com/sounds/rain.mp3',
+  'Yağmur Sesi',
+  true,
+  NULL,
+  NOW()
+);

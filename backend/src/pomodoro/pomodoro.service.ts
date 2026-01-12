@@ -10,6 +10,7 @@ import { PomodoroPreset } from './entities/pomodoro-preset.entity';
 import { StudySession } from './entities/study-session.entity';
 import { PomodoroAsset } from './entities/pomodoro-asset.entity';
 import { CreatePomodoroPresetDto } from './dto/create-pomodoro-preset.dto';
+import { UpdatePomodoroPresetDto } from './dto/update-pomodoro-preset.dto';
 import { LogStudySessionDto } from './dto/log-study-session.dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { GetAssetsDto } from './dto/get-assets.dto';
@@ -39,6 +40,144 @@ export class PomodoroService {
       where: { userId },
       order: { isDefault: 'DESC', createdAt: 'DESC' },
     });
+  }
+
+  /**
+   * Preset günceller (sadece kullanıcı kendi preset'ini güncelleyebilir)
+   */
+  async updatePreset(
+    presetId: string,
+    userId: string,
+    updatePresetDto: UpdatePomodoroPresetDto,
+  ): Promise<PomodoroPreset> {
+    const preset = await this.pomodoroPresetRepository.findOne({
+      where: { id: presetId },
+    });
+
+    if (!preset) {
+      throw new NotFoundException('Pomodoro preset not found');
+    }
+
+    if (preset.userId !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to update this preset',
+      );
+    }
+
+    // Asset ID validasyonu (eğer güncelleniyorsa)
+    if (updatePresetDto.backgroundImageId !== undefined) {
+      if (updatePresetDto.backgroundImageId === null) {
+        // null gönderilirse asset'i kaldır
+        preset.backgroundImageId = undefined;
+      } else {
+        const backgroundAsset = await this.pomodoroAssetRepository.findOne({
+          where: { id: updatePresetDto.backgroundImageId },
+        });
+
+        if (!backgroundAsset) {
+          throw new NotFoundException('Background image asset not found');
+        }
+
+        if (
+          backgroundAsset.type !== 'IMAGE' &&
+          backgroundAsset.type !== 'VIDEO'
+        ) {
+          throw new BadRequestException(
+            'Background asset must be of type IMAGE or VIDEO',
+          );
+        }
+
+        // Kullanıcı sadece sistem default veya kendi asset'lerini kullanabilir
+        if (
+          !backgroundAsset.isSystemDefault &&
+          backgroundAsset.userId !== userId
+        ) {
+          throw new ForbiddenException(
+            'You do not have access to this background image',
+          );
+        }
+
+        preset.backgroundImageId = updatePresetDto.backgroundImageId;
+      }
+    }
+
+    if (updatePresetDto.soundId !== undefined) {
+      if (updatePresetDto.soundId === null) {
+        // null gönderilirse asset'i kaldır
+        preset.soundId = undefined;
+      } else {
+        const soundAsset = await this.pomodoroAssetRepository.findOne({
+          where: { id: updatePresetDto.soundId },
+        });
+
+        if (!soundAsset) {
+          throw new NotFoundException('Sound asset not found');
+        }
+
+        if (soundAsset.type !== 'SOUND') {
+          throw new BadRequestException('Sound asset must be of type SOUND');
+        }
+
+        // Kullanıcı sadece sistem default sesleri kullanabilir
+        if (!soundAsset.isSystemDefault) {
+          throw new ForbiddenException('You do not have access to this sound');
+        }
+
+        preset.soundId = updatePresetDto.soundId;
+      }
+    }
+
+    // Diğer alanları güncelle
+    if (updatePresetDto.name !== undefined) {
+      preset.name = updatePresetDto.name;
+    }
+    if (updatePresetDto.workDuration !== undefined) {
+      preset.workDuration = updatePresetDto.workDuration;
+    }
+    if (updatePresetDto.breakDuration !== undefined) {
+      preset.breakDuration = updatePresetDto.breakDuration;
+    }
+    if (updatePresetDto.longBreakDuration !== undefined) {
+      preset.longBreakDuration = updatePresetDto.longBreakDuration;
+    }
+    if (updatePresetDto.setsUntilLongBreak !== undefined) {
+      preset.setsUntilLongBreak = updatePresetDto.setsUntilLongBreak;
+    }
+
+    // isDefault güncellemesi
+    if (updatePresetDto.isDefault !== undefined) {
+      if (updatePresetDto.isDefault && !preset.isDefault) {
+        // Eğer bu preset default yapılıyorsa, diğer preset'lerin isDefault'unu false yap
+        await this.pomodoroPresetRepository.update(
+          { userId, isDefault: true },
+          { isDefault: false },
+        );
+      }
+      preset.isDefault = updatePresetDto.isDefault;
+    }
+
+    return this.pomodoroPresetRepository.save(preset);
+  }
+
+  /**
+   * Preset siler (sadece kullanıcı kendi preset'ini silebilir)
+   */
+  async deletePreset(presetId: string, userId: string): Promise<void> {
+    const preset = await this.pomodoroPresetRepository.findOne({
+      where: { id: presetId },
+    });
+
+    if (!preset) {
+      throw new NotFoundException('Pomodoro preset not found');
+    }
+
+    if (preset.userId !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to delete this preset',
+      );
+    }
+
+    await this.pomodoroPresetRepository.remove(preset);
   }
 
   /**
@@ -205,20 +344,28 @@ export class PomodoroService {
 
   /**
    * Asset'leri listeler (sistem default + kullanıcı asset'leri)
+   * Not: SOUND tipi için sadece sistem default sesler döner
    */
   async getAssets(
     userId: string,
     getAssetsDto: GetAssetsDto,
   ): Promise<PomodoroAsset[]> {
-    const query = this.pomodoroAssetRepository
-      .createQueryBuilder('asset')
-      .where(
+    const query = this.pomodoroAssetRepository.createQueryBuilder('asset');
+
+    // SOUND tipi için sadece sistem default sesleri göster
+    if (getAssetsDto.type === 'SOUND') {
+      query.where('asset.type = :type', { type: 'SOUND' });
+      query.andWhere('asset.isSystemDefault = true');
+    } else {
+      // Diğer tipler için: sistem default + kullanıcı asset'leri
+      query.where(
         '(asset.isSystemDefault = true OR asset.userId = :userId)',
         { userId },
       );
 
-    if (getAssetsDto.type) {
-      query.andWhere('asset.type = :type', { type: getAssetsDto.type });
+      if (getAssetsDto.type) {
+        query.andWhere('asset.type = :type', { type: getAssetsDto.type });
+      }
     }
 
     return query
@@ -229,11 +376,19 @@ export class PomodoroService {
 
   /**
    * Yeni asset oluşturur (kullanıcı yüklediği dosya için)
+   * Not: SOUND tipinde asset oluşturulamaz (sadece sistem default sesler kullanılabilir)
    */
   async createAsset(
     userId: string,
     createAssetDto: CreateAssetDto,
   ): Promise<PomodoroAsset> {
+    // SOUND tipinde asset oluşturmayı engelle
+    if (createAssetDto.type === 'SOUND') {
+      throw new BadRequestException(
+        'Sound assets cannot be created by users. Only system default sounds are available.',
+      );
+    }
+
     // Video/GIF için validasyonlar
     if (createAssetDto.type === 'VIDEO') {
       // Dosya boyutu kontrolü (max 10MB)

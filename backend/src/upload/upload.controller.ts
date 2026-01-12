@@ -32,7 +32,7 @@ export class UploadController {
     let maxFileSize: number; // byte cinsinden
 
     if (fileType === 'pomodoro-asset') {
-      // Pomodoro asset için: görsel, ses ve video/GIF
+      // Pomodoro asset için: görsel ve video/GIF (ses dosyaları kullanıcılar tarafından yüklenemez)
       allowedExtensions = [
         'jpg',
         'jpeg',
@@ -42,9 +42,6 @@ export class UploadController {
         'mp4',
         'webm',
         'mov',
-        'mp3',
-        'wav',
-        'ogg',
       ];
       maxFileSize = 10 * 1024 * 1024; // 10MB
     } else {

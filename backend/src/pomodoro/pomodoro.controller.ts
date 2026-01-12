@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Body,
   UseGuards,
   HttpCode,
@@ -14,6 +15,7 @@ import { PomodoroService } from './pomodoro.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { CreatePomodoroPresetDto } from './dto/create-pomodoro-preset.dto';
+import { UpdatePomodoroPresetDto } from './dto/update-pomodoro-preset.dto';
 import { LogStudySessionDto } from './dto/log-study-session.dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { GetAssetsDto } from './dto/get-assets.dto';
@@ -59,6 +61,46 @@ export class PomodoroController {
   }
 
   /**
+   * Preset günceller
+   * PUT /api/pomodoro/presets/:id
+   */
+  @Put('presets/:id')
+  @HttpCode(HttpStatus.OK)
+  async updatePreset(
+    @GetUser('id') userId: string,
+    @Param('id') presetId: string,
+    @Body() updatePresetDto: UpdatePomodoroPresetDto,
+  ) {
+    const preset = await this.pomodoroService.updatePreset(
+      presetId,
+      userId,
+      updatePresetDto,
+    );
+    return {
+      success: true,
+      message: 'Pomodoro preset updated successfully',
+      data: { preset },
+    };
+  }
+
+  /**
+   * Preset siler
+   * DELETE /api/pomodoro/presets/:id
+   */
+  @Delete('presets/:id')
+  @HttpCode(HttpStatus.OK)
+  async deletePreset(
+    @GetUser('id') userId: string,
+    @Param('id') presetId: string,
+  ) {
+    await this.pomodoroService.deletePreset(presetId, userId);
+    return {
+      success: true,
+      message: 'Pomodoro preset deleted successfully',
+    };
+  }
+
+  /**
    * Bir study session'ı loglar
    * POST /api/pomodoro/log
    */
@@ -82,6 +124,7 @@ export class PomodoroController {
   /**
    * Asset'leri listeler (sistem default + kullanıcı asset'leri)
    * GET /api/pomodoro/assets?type=IMAGE
+   * Not: type=SOUND için sadece sistem default sesler döner
    */
   @Get('assets')
   @HttpCode(HttpStatus.OK)
@@ -101,6 +144,30 @@ export class PomodoroController {
           isSystemDefault: asset.isSystemDefault,
           fileSize: asset.fileSize,
           durationSeconds: asset.durationSeconds,
+          createdAt: asset.createdAt,
+        })),
+      },
+    };
+  }
+
+  /**
+   * Sistem default sesleri getirir
+   * GET /api/pomodoro/assets/default-sounds
+   */
+  @Get('assets/default-sounds')
+  @HttpCode(HttpStatus.OK)
+  async getDefaultSounds(@GetUser('id') userId: string) {
+    const assets = await this.pomodoroService.getAssets(userId, {
+      type: 'SOUND',
+    });
+    return {
+      success: true,
+      data: {
+        sounds: assets.map((asset) => ({
+          id: asset.id,
+          name: asset.name,
+          url: asset.url,
+          isSystemDefault: asset.isSystemDefault,
           createdAt: asset.createdAt,
         })),
       },
