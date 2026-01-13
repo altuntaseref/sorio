@@ -13,6 +13,7 @@ import { Subject } from '../../subjects/entities/subject.entity';
 @Entity('study_sessions')
 @Index(['userId'])
 @Index(['userId', 'startedAt'])
+@Index(['timerType'])
 export class StudySession {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -21,10 +22,10 @@ export class StudySession {
   userId: string;
 
   @Column({ name: 'subject_id', nullable: true })
-  subjectId?: string; // Hangi derse çalıştı? (Opsiyonel ama çok değerli)
+  subjectId?: string;
 
   @Column({ type: 'integer' })
-  duration: number; // Kaç dakika sürdü?
+  duration: number; // Dakika cinsinden
 
   @Column({ name: 'started_at', type: 'timestamp' })
   startedAt: Date;
@@ -37,7 +38,16 @@ export class StudySession {
     length: 20,
     default: 'COMPLETED',
   })
-  status: 'COMPLETED' | 'ABORTED'; // Yarıda mı kesti, bitirdi mi?
+  status: 'COMPLETED' | 'ABORTED';
+
+  @Column({
+    name: 'timer_type',
+    type: 'varchar',
+    length: 20,
+    default: 'POMODORO',
+    nullable: false,
+  })
+  timerType: 'POMODORO' | 'FREE_TIMER';
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
@@ -50,5 +60,3 @@ export class StudySession {
   @JoinColumn({ name: 'subject_id' })
   subject?: Subject;
 }
-
-

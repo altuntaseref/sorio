@@ -44,13 +44,13 @@ export class R2Service {
   }
 
   generateFileKey(
-    fileType: 'question' | 'solution' | 'pomodoro-asset',
+    fileType: 'question' | 'solution' | 'asset',
     userId: string,
     fileName: string,
   ): string {
     const timestamp = Date.now();
-    if (fileType === 'pomodoro-asset') {
-      return `pomodoro-assets/${userId}/${timestamp}-${fileName}`;
+    if (fileType === 'asset') {
+      return `assets/${userId}/${timestamp}-${fileName}`;
     }
     return `${fileType}s/${userId}/${timestamp}-${fileName}`;
   }

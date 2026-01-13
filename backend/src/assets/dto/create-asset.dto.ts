@@ -2,7 +2,6 @@ import {
   IsString,
   IsIn,
   IsOptional,
-  IsUUID,
   IsNumber,
   Min,
   Max,
@@ -38,5 +37,3 @@ export class CreateAssetDto {
   @Max(30) // Max 30 saniye
   durationSeconds?: number; // Video/GIF süresi (saniye cinsinden)
 }
-
-

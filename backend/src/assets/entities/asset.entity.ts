@@ -9,10 +9,10 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-@Entity('pomodoro_assets')
+@Entity('assets')
 @Index(['userId'])
 @Index(['type', 'isSystemDefault'])
-export class PomodoroAsset {
+export class Asset {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -21,12 +21,6 @@ export class PomodoroAsset {
     length: 20,
   })
   type: 'IMAGE' | 'SOUND' | 'VIDEO'; // Görsel, ses veya video/GIF dosyası
-
-  @Column({ name: 'file_size', nullable: true, type: 'bigint' })
-  fileSize?: number; // Dosya boyutu (byte cinsinden)
-
-  @Column({ name: 'duration_seconds', nullable: true, type: 'integer' })
-  durationSeconds?: number; // Video/GIF süresi (saniye cinsinden, max 30 saniye)
 
   @Column({ type: 'text' })
   url: string; // Dosyanın R2/CDN adresi
@@ -43,6 +37,12 @@ export class PomodoroAsset {
   @Column({ name: 'r2_key', nullable: true })
   r2Key?: string; // R2'deki dosya key'i (silme için, sadece kullanıcı yüklediği dosyalar için)
 
+  @Column({ name: 'file_size', nullable: true, type: 'bigint' })
+  fileSize?: number; // Dosya boyutu (byte cinsinden)
+
+  @Column({ name: 'duration_seconds', nullable: true, type: 'integer' })
+  durationSeconds?: number; // Video/GIF süresi (saniye cinsinden, max 30 saniye)
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
@@ -50,5 +50,3 @@ export class PomodoroAsset {
   @JoinColumn({ name: 'user_id' })
   user?: User;
 }
-
-

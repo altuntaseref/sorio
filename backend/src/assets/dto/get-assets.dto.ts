@@ -5,5 +5,3 @@ export class GetAssetsDto {
   @IsIn(['IMAGE', 'SOUND', 'VIDEO'])
   type?: 'IMAGE' | 'SOUND' | 'VIDEO'; // Filtreleme için (opsiyonel)
 }
-
-

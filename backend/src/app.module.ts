@@ -15,7 +15,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { MotivationModule } from './motivation/motivation.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { PomodoroModule } from './pomodoro/pomodoro.module';
+import { PresetsModule } from './presets/presets.module';
+import { AssetsModule } from './assets/assets.module';
+import { StudySessionsModule } from './study-sessions/study-sessions.module';
 
 @Module({
   imports: [
@@ -35,7 +37,9 @@ import { PomodoroModule } from './pomodoro/pomodoro.module';
     SchedulerModule,
     MotivationModule,
     DashboardModule,
-    PomodoroModule,
+    PresetsModule,
+    AssetsModule,
+    StudySessionsModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],

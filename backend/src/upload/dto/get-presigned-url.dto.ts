@@ -5,8 +5,8 @@ export class GetPresignedUrlDto {
   @IsNotEmpty()
   fileName: string;
 
-  @IsIn(['question', 'solution', 'pomodoro-asset'])
-  fileType: 'question' | 'solution' | 'pomodoro-asset';
+  @IsIn(['question', 'solution', 'asset'])
+  fileType: 'question' | 'solution' | 'asset';
 
   @IsString()
   @IsOptional()
