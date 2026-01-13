@@ -109,4 +109,39 @@ export class R2Service {
 
     await this.s3Client.send(command);
   }
+
+  /**
+   * Buffer'ı R2'ye yükler ve public URL döner
+   */
+  async uploadBuffer(
+    buffer: Buffer,
+    key: string,
+    contentType: string,
+    expiresIn: number = 900, // 15 dakika
+  ): Promise<string> {
+    const putCommand = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+
+    await this.s3Client.send(putCommand);
+
+    // Public URL oluştur
+    if (this.publicUrl && this.publicUrl.startsWith('https://')) {
+      return `${this.publicUrl.replace(/\/$/, '')}/${key}`;
+    }
+
+    // Presigned GET URL oluştur
+    const getCommand = new GetObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+    const signedUrl = await getSignedUrl(this.s3Client, getCommand, {
+      expiresIn,
+    });
+
+    return signedUrl;
+  }
 }

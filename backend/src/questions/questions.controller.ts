@@ -19,6 +19,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { GetQuestionsDto } from './dto/get-questions.dto';
 import { R2Service } from '../upload/r2.service';
+import { PdfService } from './pdf.service';
+import { GeneratePdfDto } from './dto/generate-pdf.dto';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
@@ -26,6 +28,7 @@ export class QuestionsController {
   constructor(
     private readonly questionsService: QuestionsService,
     private readonly r2Service: R2Service,
+    private readonly pdfService: PdfService,
   ) {}
 
   @Post()
@@ -113,5 +116,32 @@ export class QuestionsController {
         );
       });
     }
+  }
+
+  /**
+   * Seçilen soruları PDF formatında oluşturur, R2'ye yükler ve URL döner
+   * POST /api/questions/generate-pdf
+   */
+  @Post('generate-pdf')
+  @HttpCode(HttpStatus.OK)
+  async generatePdf(
+    @GetUser('id') userId: string,
+    @Body() generatePdfDto: GeneratePdfDto,
+  ) {
+    const result = await this.pdfService.generatePdf(
+      userId,
+      generatePdfDto.questionIds,
+      {
+        title: generatePdfDto.title || 'Sorular',
+        questionsPerPage: generatePdfDto.questionsPerPage || 1,
+        columns: generatePdfDto.columns || 1,
+      },
+      generatePdfDto.preview || false,
+    );
+
+    return {
+      success: true,
+      data: result,
+    };
   }
 }
