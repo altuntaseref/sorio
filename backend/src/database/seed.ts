@@ -4,6 +4,7 @@ import { Topic } from '../topics/entities/topic.entity';
 // FIX: Changed to default import as appDataSource is a default export
 import appDataSource from '../../typeorm.config';
 import { seedMotivationQuotes } from './seed-motivation';
+import { seedExams } from './seed-exams';
 
 // --- VERİ YAPISI --- //
 interface ISeedTopic {
@@ -24,6 +25,9 @@ async function runSeed() {
   try {
     await appDataSource.initialize();
     console.log('📦 Database bağlantısı başarılı!');
+
+    // Sınavları ve dersleri seed et
+    await seedExams(appDataSource);
 
     // Motivasyon sözlerini seed et
     await seedMotivationQuotes(appDataSource);

@@ -18,6 +18,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { PresetsModule } from './presets/presets.module';
 import { AssetsModule } from './assets/assets.module';
 import { StudySessionsModule } from './study-sessions/study-sessions.module';
+import { ExamsModule } from './exams/exams.module';
+import { MockExamsModule } from './mock-exams/mock-exams.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { StudySessionsModule } from './study-sessions/study-sessions.module';
     PresetsModule,
     AssetsModule,
     StudySessionsModule,
+    ExamsModule,
+    MockExamsModule,
   ],
   controllers: [AppController],
   providers: [LoggerService],

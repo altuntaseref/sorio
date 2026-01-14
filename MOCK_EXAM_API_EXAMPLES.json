@@ -1,0 +1,529 @@
+{
+  "mockExamApiExamples": {
+    "description": "Mock Exam (Deneme Sınavı) API Request & Response Örnekleri",
+    
+    "1_setExamTargets": {
+      "endpoint": "POST /api/mock-exams/targets",
+      "description": "Kullanıcının hangi sınavlara gireceğini belirler",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "examCodes": ["TYT", "AYT_SAY"]
+      },
+      "response_success": {
+        "success": true,
+        "data": {
+          "targets": [
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "TYT",
+              "createdAt": "2024-01-14T10:00:00.000Z"
+            },
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440001",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "AYT_SAY",
+              "createdAt": "2024-01-14T10:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+
+    "2_getExamTargets": {
+      "endpoint": "GET /api/mock-exams/targets",
+      "description": "Kullanıcının seçtiği sınavları getirir",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>"
+      },
+      "request": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "targets": [
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "TYT",
+              "createdAt": "2024-01-14T10:00:00.000Z"
+            },
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440001",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "AYT_SAY",
+              "createdAt": "2024-01-14T10:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+
+    "3_setExamGoal": {
+      "endpoint": "POST /api/mock-exams/goals",
+      "description": "Her sınav için hedef net belirler/günceller",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "examCode": "TYT",
+        "targetNet": 95.00
+      },
+      "response_success": {
+        "success": true,
+        "data": {
+          "goal": {
+            "id": "660e8400-e29b-41d4-a716-446655440000",
+            "userId": "123e4567-e89b-12d3-a456-426614174000",
+            "examCode": "TYT",
+            "targetNet": 95.00,
+            "createdAt": "2024-01-14T10:00:00.000Z",
+            "updatedAt": "2024-01-14T10:00:00.000Z"
+          }
+        }
+      }
+    },
+
+    "4_getExamGoals": {
+      "endpoint": "GET /api/mock-exams/goals",
+      "description": "Tüm hedef netleri getirir",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>"
+      },
+      "request": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "goals": [
+            {
+              "id": "660e8400-e29b-41d4-a716-446655440000",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "TYT",
+              "targetNet": 95.00,
+              "createdAt": "2024-01-14T10:00:00.000Z",
+              "updatedAt": "2024-01-14T10:00:00.000Z"
+            },
+            {
+              "id": "660e8400-e29b-41d4-a716-446655440001",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "AYT_SAY",
+              "targetNet": 70.00,
+              "createdAt": "2024-01-14T10:00:00.000Z",
+              "updatedAt": "2024-01-14T10:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+
+    "5_getSubjectsByExamCode": {
+      "endpoint": "GET /api/mock-exams/subjects?examCode=TYT",
+      "description": "Seçilen sınava ait sistem derslerini getirir (konularıyla birlikte)",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>"
+      },
+      "request": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "subjects": [
+            {
+              "id": "770e8400-e29b-41d4-a716-446655440000",
+              "name": "Türkçe",
+              "examCode": "TYT",
+              "sectionKey": "turkish",
+              "isSystem": true,
+              "userId": null,
+              "createdAt": "2024-01-14T10:00:00.000Z",
+              "topics": [
+                {
+                  "id": "880e8400-e29b-41d4-a716-446655440000",
+                  "name": "Sözcükte Anlam",
+                  "subjectId": "770e8400-e29b-41d4-a716-446655440000",
+                  "createdAt": "2024-01-14T10:00:00.000Z"
+                },
+                {
+                  "id": "880e8400-e29b-41d4-a716-446655440001",
+                  "name": "Cümlede Anlam",
+                  "subjectId": "770e8400-e29b-41d4-a716-446655440000",
+                  "createdAt": "2024-01-14T10:00:00.000Z"
+                }
+              ]
+            },
+            {
+              "id": "770e8400-e29b-41d4-a716-446655440001",
+              "name": "Temel Matematik",
+              "examCode": "TYT",
+              "sectionKey": "math",
+              "isSystem": true,
+              "userId": null,
+              "createdAt": "2024-01-14T10:00:00.000Z",
+              "topics": [
+                {
+                  "id": "880e8400-e29b-41d4-a716-446655440002",
+                  "name": "Sayılar",
+                  "subjectId": "770e8400-e29b-41d4-a716-446655440001",
+                  "createdAt": "2024-01-14T10:00:00.000Z"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+
+    "6_createMockExam": {
+      "endpoint": "POST /api/mock-exams",
+      "description": "Deneme sınavı kaydeder (net otomatik hesaplanır, rekor kontrolü yapılır)",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>",
+        "Content-Type": "application/json"
+      },
+      "request": {
+        "examCode": "TYT",
+        "examName": "Özdebir Türkiye Geneli - 3",
+        "examDate": "2024-01-14",
+        "subjectResults": [
+          {
+            "subjectId": "770e8400-e29b-41d4-a716-446655440000",
+            "correct": 85,
+            "wrong": 15,
+            "empty": 20
+          },
+          {
+            "subjectId": "770e8400-e29b-41d4-a716-446655440001",
+            "correct": 78,
+            "wrong": 22,
+            "empty": 20
+          },
+          {
+            "subjectId": "770e8400-e29b-41d4-a716-446655440002",
+            "correct": 18,
+            "wrong": 2,
+            "empty": 0
+          },
+          {
+            "subjectId": "770e8400-e29b-41d4-a716-446655440003",
+            "correct": 15,
+            "wrong": 5,
+            "empty": 0
+          }
+        ]
+      },
+      "response_success": {
+        "success": true,
+        "data": {
+          "mockExam": {
+            "id": "990e8400-e29b-41d4-a716-446655440000",
+            "userId": "123e4567-e89b-12d3-a456-426614174000",
+            "examCode": "TYT",
+            "examName": "Özdebir Türkiye Geneli - 3",
+            "examDate": "2024-01-14",
+            "totalCorrect": 196,
+            "totalWrong": 44,
+            "totalEmpty": 40,
+            "totalNet": 185.00,
+            "isRecord": true,
+            "createdAt": "2024-01-14T10:00:00.000Z",
+            "updatedAt": "2024-01-14T10:00:00.000Z",
+            "subjectResults": [
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440000",
+                "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                "subjectId": "770e8400-e29b-41d4-a716-446655440000",
+                "correctCount": 85,
+                "wrongCount": 15,
+                "emptyCount": 20,
+                "net": 81.25,
+                "createdAt": "2024-01-14T10:00:00.000Z",
+                "subject": {
+                  "id": "770e8400-e29b-41d4-a716-446655440000",
+                  "name": "Türkçe",
+                  "examCode": "TYT",
+                  "sectionKey": "turkish"
+                }
+              },
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440001",
+                "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                "subjectId": "770e8400-e29b-41d4-a716-446655440001",
+                "correctCount": 78,
+                "wrongCount": 22,
+                "emptyCount": 20,
+                "net": 72.50,
+                "createdAt": "2024-01-14T10:00:00.000Z",
+                "subject": {
+                  "id": "770e8400-e29b-41d4-a716-446655440001",
+                  "name": "Temel Matematik",
+                  "examCode": "TYT",
+                  "sectionKey": "math"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "response_error": {
+        "success": false,
+        "message": "Exam with code TYT not found"
+      }
+    },
+
+    "7_getMockExams": {
+      "endpoint": "GET /api/mock-exams?examCode=TYT",
+      "description": "Deneme sınavlarını listeler (opsiyonel: examCode ile filtreleme)",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>"
+      },
+      "request": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "mockExams": [
+            {
+              "id": "990e8400-e29b-41d4-a716-446655440000",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "TYT",
+              "examName": "Özdebir Türkiye Geneli - 3",
+              "examDate": "2024-01-14",
+              "totalCorrect": 196,
+              "totalWrong": 44,
+              "totalEmpty": 40,
+              "totalNet": 185.00,
+              "isRecord": true,
+              "createdAt": "2024-01-14T10:00:00.000Z",
+              "updatedAt": "2024-01-14T10:00:00.000Z",
+              "subjectResults": [
+                {
+                  "id": "aa0e8400-e29b-41d4-a716-446655440000",
+                  "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                  "subjectId": "770e8400-e29b-41d4-a716-446655440000",
+                  "correctCount": 85,
+                  "wrongCount": 15,
+                  "emptyCount": 20,
+                  "net": 81.25,
+                  "subject": {
+                    "id": "770e8400-e29b-41d4-a716-446655440000",
+                    "name": "Türkçe"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "990e8400-e29b-41d4-a716-446655440001",
+              "userId": "123e4567-e89b-12d3-a456-426614174000",
+              "examCode": "TYT",
+              "examName": "3D Yayınları Deneme-1",
+              "examDate": "2024-01-08",
+              "totalCorrect": 178,
+              "totalWrong": 42,
+              "totalEmpty": 40,
+              "totalNet": 167.50,
+              "isRecord": false,
+              "createdAt": "2024-01-08T10:00:00.000Z",
+              "updatedAt": "2024-01-08T10:00:00.000Z",
+              "subjectResults": []
+            }
+          ]
+        }
+      }
+    },
+
+    "8_getMockExamById": {
+      "endpoint": "GET /api/mock-exams/:id",
+      "description": "Deneme sınavı detayını getirir (Zayıf Nokta Analizi dahil)",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>"
+      },
+      "request": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "mockExam": {
+            "id": "990e8400-e29b-41d4-a716-446655440000",
+            "userId": "123e4567-e89b-12d3-a456-426614174000",
+            "examCode": "AYT_SAY",
+            "examName": "Özdebir Türkiye Geneli - 3",
+            "examDate": "2023-09-15",
+            "totalCorrect": 94,
+            "totalWrong": 18,
+            "totalEmpty": 8,
+            "totalNet": 89.50,
+            "isRecord": true,
+            "createdAt": "2023-09-15T10:00:00.000Z",
+            "updatedAt": "2023-09-15T10:00:00.000Z",
+            "subjectResults": [
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440000",
+                "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                "subjectId": "770e8400-e29b-41d4-a716-446655440000",
+                "correctCount": 40,
+                "wrongCount": 0,
+                "emptyCount": 0,
+                "net": 34.00,
+                "createdAt": "2023-09-15T10:00:00.000Z",
+                "subject": {
+                  "id": "770e8400-e29b-41d4-a716-446655440000",
+                  "name": "Matematik",
+                  "examCode": "AYT_SAY",
+                  "sectionKey": "math"
+                }
+              },
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440001",
+                "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                "subjectId": "770e8400-e29b-41d4-a716-446655440001",
+                "correctCount": 36,
+                "wrongCount": 0,
+                "emptyCount": 0,
+                "net": 36.00,
+                "createdAt": "2023-09-15T10:00:00.000Z",
+                "subject": {
+                  "id": "770e8400-e29b-41d4-a716-446655440001",
+                  "name": "Türkçe",
+                  "examCode": "AYT_SAY",
+                  "sectionKey": "turkish"
+                }
+              },
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440002",
+                "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                "subjectId": "770e8400-e29b-41d4-a716-446655440002",
+                "correctCount": 7,
+                "wrongCount": 7,
+                "emptyCount": 0,
+                "net": 5.75,
+                "createdAt": "2023-09-15T10:00:00.000Z",
+                "subject": {
+                  "id": "770e8400-e29b-41d4-a716-446655440002",
+                  "name": "Fizik",
+                  "examCode": "AYT_SAY",
+                  "sectionKey": "physics"
+                }
+              },
+              {
+                "id": "aa0e8400-e29b-41d4-a716-446655440003",
+                "mockExamId": "990e8400-e29b-41d4-a716-446655440000",
+                "subjectId": "770e8400-e29b-41d4-a716-446655440003",
+                "correctCount": 11,
+                "wrongCount": 2,
+                "emptyCount": 0,
+                "net": 13.75,
+                "createdAt": "2023-09-15T10:00:00.000Z",
+                "subject": {
+                  "id": "770e8400-e29b-41d4-a716-446655440003",
+                  "name": "Kimya",
+                  "examCode": "AYT_SAY",
+                  "sectionKey": "chemistry"
+                }
+              }
+            ],
+            "weakPointAnalysis": {
+              "averageNet": 22.38,
+              "weakSubjects": [
+                {
+                  "subjectId": "770e8400-e29b-41d4-a716-446655440002",
+                  "subjectName": "Fizik",
+                  "net": 5.75,
+                  "averageNet": 22.38,
+                  "difference": 16.63
+                }
+              ],
+              "weakestSubject": {
+                "subjectId": "770e8400-e29b-41d4-a716-446655440002",
+                "subjectName": "Fizik",
+                "net": 5.75,
+                "averageNet": 22.38,
+                "difference": 16.63
+              },
+              "hasWeakPoint": true
+            }
+          }
+        }
+      },
+      "response_error": {
+        "success": false,
+        "message": "Mock exam with id 990e8400-e29b-41d4-a716-446655440000 not found"
+      }
+    },
+
+    "9_getProgress": {
+      "endpoint": "GET /api/mock-exams/progress/:examCode",
+      "description": "Gelişim verilerini getirir (trend analizi ve hedef karşılaştırması)",
+      "headers": {
+        "Authorization": "Bearer <jwt_token>"
+      },
+      "request": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "progress": {
+            "currentNet": 72.5,
+            "targetNet": 90.0,
+            "progress": 80.56,
+            "remainingNet": 17.5,
+            "lastPerformance": {
+              "examName": "Özdebir Türkiye Geneli - 3",
+              "examDate": "2024-01-14",
+              "totalNet": 72.5,
+              "totalCorrect": 78,
+              "totalWrong": 22,
+              "totalEmpty": 20
+            },
+            "trend": [
+              {
+                "date": "2023-09-15",
+                "net": 65.0,
+                "examName": "İlk Deneme"
+              },
+              {
+                "date": "2023-10-10",
+                "net": 68.5,
+                "examName": "İkinci Deneme"
+              },
+              {
+                "date": "2023-11-12",
+                "net": 70.0,
+                "examName": "Üçüncü Deneme"
+              },
+              {
+                "date": "2023-12-15",
+                "net": 100.0,
+                "examName": "Dördüncü Deneme"
+              },
+              {
+                "date": "2024-01-14",
+                "net": 72.5,
+                "examName": "Özdebir Türkiye Geneli - 3"
+              }
+            ]
+          }
+        }
+      },
+      "response_no_data": {
+        "success": true,
+        "data": {
+          "progress": {
+            "currentNet": 0,
+            "targetNet": 0,
+            "progress": 0,
+            "remainingNet": 0,
+            "lastPerformance": null,
+            "trend": []
+          }
+        }
+      }
+    }
+  },
+
+  "notes": {
+    "authentication": "Tüm endpoint'ler JWT authentication gerektirir. Authorization header'ında Bearer token gönderilmelidir.",
+    "netCalculation": "Net hesaplama: net = doğru - (yanlış / incorrectToNullify). incorrectToNullify değeri exams tablosundan alınır (genellikle 3 veya 4).",
+    "recordCheck": "Yeni deneme kaydedilirken aynı sınav tipindeki en yüksek net ile karşılaştırılır. Eğer yeni net daha yüksekse isRecord = true olur.",
+    "dateFormat": "examDate formatı: YYYY-MM-DD (ISO date string)",
+    "errorResponses": "Hata durumlarında success: false ve message alanı döner. HTTP status code'lar: 400 (Bad Request), 401 (Unauthorized), 404 (Not Found), 500 (Internal Server Error)"
+  }
+}

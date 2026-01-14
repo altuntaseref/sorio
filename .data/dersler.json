@@ -1,0 +1,207 @@
+[
+    {
+      "order": 1,
+      "code": "TYT",
+      "name": "Temel Yeterlilik Testi",
+      "shortName": "TYT",
+      "level": "UNIVERSITY",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "turkish", "name": "Türkçe", "questionCount": 40 },
+        { "key": "social", "name": "Sosyal Bilimler", "questionCount": 20 },
+        { "key": "math", "name": "Temel Matematik", "questionCount": 40 },
+        { "key": "science", "name": "Fen Bilimleri", "questionCount": 20 }
+      ]
+    },
+    {
+      "order": 2,
+      "code": "AYT_SAY",
+      "name": "Alan Yeterlilik Testi (Sayısal)",
+      "shortName": "AYT (SAY)",
+      "level": "UNIVERSITY",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "math", "name": "Matematik", "questionCount": 40 },
+        { "key": "physics", "name": "Fizik", "questionCount": 14 },
+        { "key": "chemistry", "name": "Kimya", "questionCount": 13 },
+        { "key": "biology", "name": "Biyoloji", "questionCount": 13 }
+      ]
+    },
+    {
+      "order": 3,
+      "code": "AYT_EA",
+      "name": "Alan Yeterlilik Testi (Eşit Ağırlık)",
+      "shortName": "AYT (EA)",
+      "level": "UNIVERSITY",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "math", "name": "Matematik", "questionCount": 40 },
+        { "key": "literature", "name": "Edebiyat", "questionCount": 24 },
+        { "key": "history1", "name": "Tarih-1", "questionCount": 10 },
+        { "key": "geography1", "name": "Coğrafya-1", "questionCount": 6 }
+      ]
+    },
+    {
+      "order": 4,
+      "code": "AYT_SOZ",
+      "name": "Alan Yeterlilik Testi (Sözel)",
+      "shortName": "AYT (SÖZ)",
+      "level": "UNIVERSITY",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "literature", "name": "Edebiyat", "questionCount": 24 },
+        { "key": "history1", "name": "Tarih-1", "questionCount": 10 },
+        { "key": "geography1", "name": "Coğrafya-1", "questionCount": 6 },
+        { "key": "history2", "name": "Tarih-2", "questionCount": 11 },
+        { "key": "geography2", "name": "Coğrafya-2", "questionCount": 11 },
+        { "key": "philosophy", "name": "Felsefe Grubu", "questionCount": 12 },
+        { "key": "religion", "name": "Din Kültürü", "questionCount": 6 }
+      ]
+    },
+    {
+      "order": 5,
+      "code": "YDT",
+      "name": "Yabancı Dil Testi",
+      "shortName": "YDT (DİL)",
+      "level": "UNIVERSITY",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "language", "name": "Yabancı Dil", "questionCount": 80 }
+      ]
+    },
+    {
+      "order": 6,
+      "code": "MSU",
+      "name": "Milli Savunma Üniversitesi Sınavı",
+      "shortName": "MSÜ",
+      "level": "UNIVERSITY",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "turkish", "name": "Türkçe", "questionCount": 40 },
+        { "key": "social", "name": "Sosyal Bilimler", "questionCount": 20 },
+        { "key": "math", "name": "Temel Matematik", "questionCount": 40 },
+        { "key": "science", "name": "Fen Bilimleri", "questionCount": 20 }
+      ]
+    },
+    {
+      "order": 7,
+      "code": "LGS",
+      "name": "Liselere Geçiş Sistemi",
+      "shortName": "LGS",
+      "level": "HIGH_SCHOOL",
+      "incorrectToNullify": 3,
+      "sections": [
+        { "key": "turkish", "name": "Türkçe", "questionCount": 20 },
+        { "key": "history", "name": "İnkılap Tarihi", "questionCount": 10 },
+        { "key": "religion", "name": "Din Kültürü", "questionCount": 10 },
+        { "key": "language", "name": "Yabancı Dil", "questionCount": 10 },
+        { "key": "math", "name": "Matematik", "questionCount": 20 },
+        { "key": "science", "name": "Fen Bilimleri", "questionCount": 20 }
+      ]
+    },
+    {
+      "order": 8,
+      "code": "KPSS_LISANS",
+      "name": "KPSS Lisans (Genel Yetenek - Genel Kültür)",
+      "shortName": "KPSS",
+      "level": "PUBLIC_SECTOR",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "turkish", "name": "Türkçe", "questionCount": 30 },
+        { "key": "math", "name": "Matematik", "questionCount": 30 },
+        { "key": "history", "name": "Tarih", "questionCount": 27 },
+        { "key": "geography", "name": "Coğrafya", "questionCount": 18 },
+        { "key": "citizenship", "name": "Vatandaşlık", "questionCount": 9 },
+        { "key": "current", "name": "Güncel Bilgiler", "questionCount": 6 }
+      ]
+    },
+    {
+      "order": 9,
+      "code": "KPSS_EGITIM",
+      "name": "KPSS Eğitim Bilimleri",
+      "shortName": "KPSS (Eğitim)",
+      "level": "PUBLIC_SECTOR",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "education_sciences", "name": "Eğitim Bilimleri", "questionCount": 80 }
+      ]
+    },
+    {
+      "order": 10,
+      "code": "KPSS_OABT",
+      "name": "KPSS Öğretmenlik Alan Bilgisi Testi",
+      "shortName": "KPSS (ÖABT)",
+      "level": "PUBLIC_SECTOR",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "field_knowledge", "name": "Alan Bilgisi", "questionCount": 60 },
+        { "key": "field_education", "name": "Alan Eğitimi", "questionCount": 15 }
+      ]
+    },
+    {
+      "order": 11,
+      "code": "KPSS_ALAN",
+      "name": "KPSS A Grubu (Alan Bilgisi)",
+      "shortName": "KPSS (ALAN)",
+      "level": "PUBLIC_SECTOR",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "law", "name": "Hukuk", "questionCount": 40 },
+        { "key": "economics", "name": "İktisat", "questionCount": 40 },
+        { "key": "finance", "name": "Maliye", "questionCount": 40 },
+        { "key": "accounting", "name": "Muhasebe", "questionCount": 40 },
+        { "key": "business", "name": "İşletme", "questionCount": 40 }
+      ]
+    },
+    {
+      "order": 12,
+      "code": "AGS",
+      "name": "Akademi Giriş Sınavı",
+      "shortName": "AGS",
+      "level": "PUBLIC_SECTOR",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "verbal", "name": "Sözel Yetenek", "questionCount": 15 },
+        { "key": "math", "name": "Sayısal Yetenek", "questionCount": 15 },
+        { "key": "history", "name": "Tarih", "questionCount": 6 },
+        { "key": "geography", "name": "Türkiye Coğrafyası", "questionCount": 6 },
+        { "key": "education_sciences", "name": "Eğitim Bilimleri", "questionCount": 30 },
+        { "key": "legislation", "name": "Mevzuat", "questionCount": 8 }
+      ]
+    },
+    {
+      "order": 13,
+      "code": "ALES",
+      "name": "Akademik Personel ve Lisansüstü Eğitimi Giriş Sınavı",
+      "shortName": "ALES",
+      "level": "ACADEMIC",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "math", "name": "Sayısal", "questionCount": 50 },
+        { "key": "verbal", "name": "Sözel", "questionCount": 50 }
+      ]
+    },
+    {
+      "order": 14,
+      "code": "DGS",
+      "name": "Dikey Geçiş Sınavı",
+      "shortName": "DGS",
+      "level": "ACADEMIC",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "math", "name": "Sayısal", "questionCount": 50 },
+        { "key": "verbal", "name": "Sözel", "questionCount": 50 }
+      ]
+    },
+    {
+      "order": 15,
+      "code": "YDS",
+      "name": "Yabancı Dil Bilgisi Seviye Tespit Sınavı",
+      "shortName": "YDS / e-YDS",
+      "level": "ACADEMIC",
+      "incorrectToNullify": 4,
+      "sections": [
+        { "key": "language", "name": "Yabancı Dil", "questionCount": 80 }
+      ]
+    }
+  ]

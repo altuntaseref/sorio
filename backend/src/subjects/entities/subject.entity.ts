@@ -32,7 +32,13 @@ export class Subject {
   name: string;
 
   @Column({ type: 'varchar', length: 50, name: 'exam_target', nullable: true })
-  examTarget: string | null;
+  examTarget: string | null; // Deprecated: Kullanıcı seviyesinde (hangi sınavlara girecek)
+
+  @Column({ type: 'varchar', length: 50, name: 'exam_code', nullable: true })
+  examCode: string | null; // Yeni: Ders seviyesinde (hangi sınavın dersi) - 'TYT', 'AYT_SAY', etc.
+
+  @Column({ type: 'varchar', length: 50, name: 'section_key', nullable: true })
+  sectionKey: string | null; // Yeni: Exam section key - 'turkish', 'math', etc.
 
   @Column({ type: 'boolean', name: 'is_system', default: false })
   isSystem: boolean;
