@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - Soru Özeti Paneli</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "primary-dark": "#0e45b5",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c10",
+                        "card-dark": "#161922",
+                        "text-secondary": "#9da6b9",
+                        "cyan-neon": "#00f5ff",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-panel {
+            background: rgba(22, 25, 34, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .donut-glow {
+            filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.4));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark font-display text-white overflow-x-hidden selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col pb-28">
+<div class="flex items-center justify-between p-4 pt-6 sticky top-0 z-20 bg-background-dark/95 backdrop-blur-md border-b border-white/5">
+<div class="flex flex-col">
+<h1 class="text-lg font-bold text-white leading-tight">Merhaba, Ahmet 👋</h1>
+<span class="text-xs text-text-secondary mt-0.5">Bugün öğrenmek için harika bir gün!</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 bg-card-dark border border-white/10 rounded-full px-3 py-1.5">
+<span class="text-orange-500 text-sm">🔥</span>
+<span class="text-xs font-bold text-white">12 Gün</span>
+</div>
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 ring-2 ring-primary/20" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBw2Mmbtbol84MFYUmPLjcyFB-z45UkOUOa3fphkIDTh0OXwQ0zee5RS6FlsoTlVd_S08gyyFdI-g3M-t9d6NCg6HL99FlbvDDT0_rBrY8_lNRjazRMgqYQcTYsFLoEqzsDC8_JHsZNja-NeOD2rlu8Pi2LbosO2v4_hCjesEgv_0OymnCwPWgZMsFqj0Fkzg2p2yoqU3-YUA-dKkBEOz3cCsFnsGTpXPl0wZXCMyCdWfb0rKpYNRQeH-WRkMoVqxmrEzt79L64ZA");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-green-500 rounded-full border-2 border-background-dark"></div>
+</div>
+</div>
+</div>
+<div class="px-4 py-4">
+<div class="glass-panel rounded-[24px] p-6 shadow-2xl relative overflow-hidden">
+<div class="absolute -top-12 -right-12 size-32 bg-cyan-neon/10 blur-[50px] rounded-full"></div>
+<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col">
+<span class="text-text-secondary text-[11px] font-semibold uppercase tracking-[0.1em] mb-1">Soru Havuzu</span>
+<div class="flex flex-col">
+<span class="text-[38px] font-bold text-white tracking-tight leading-none">145 Soru</span>
+<div class="flex items-center gap-1.5 mt-2 bg-green-500/10 w-fit px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-green-400 text-[14px] font-bold">trending_up</span>
+<span class="text-green-400 text-[11px] font-bold uppercase">+12 Bu Hafta</span>
+</div>
+</div>
+</div>
+<div class="relative size-28 shrink-0 flex items-center justify-center">
+<svg class="size-full transform -rotate-90 donut-glow" viewBox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="rgba(255,255,255,0.05)" stroke-width="3.5"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#00f5ff" stroke-dasharray="44.8 100" stroke-dashoffset="0" stroke-width="3.5"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#3b82f6" stroke-dasharray="34.4 100" stroke-dashoffset="-44.8" stroke-width="3.5"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#a855f7" stroke-dasharray="20.8 100" stroke-dashoffset="-79.2" stroke-width="3.5"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="material-symbols-outlined text-cyan-neon/30 text-2xl">bubble_chart</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3 mb-6">
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5 mb-1">
+<div class="size-2 rounded-full bg-cyan-neon shadow-[0_0_5px_rgba(0,245,255,0.5)]"></div>
+<span class="text-[10px] text-text-secondary font-medium">Kimya</span>
+</div>
+<span class="text-sm font-bold text-white">65</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5 mb-1">
+<div class="size-2 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]"></div>
+<span class="text-[10px] text-text-secondary font-medium">Mat</span>
+</div>
+<span class="text-sm font-bold text-white">50</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5 mb-1">
+<div class="size-2 rounded-full bg-purple-500 shadow-[0_0_5px_rgba(168,85,247,0.5)]"></div>
+<span class="text-[10px] text-text-secondary font-medium">Fizik</span>
+</div>
+<span class="text-sm font-bold text-white">30</span>
+</div>
+</div>
+<div class="flex justify-center items-center gap-1.5">
+<div class="size-1.5 rounded-full bg-cyan-neon shadow-[0_0_8px_rgba(0,245,255,0.8)]"></div>
+<div class="size-1.5 rounded-full bg-white/10"></div>
+<div class="size-1.5 rounded-full bg-white/10"></div>
+</div>
+</div>
+</div>
+<div class="px-4 pb-6">
+<div class="grid grid-cols-2 gap-3">
+<button class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 p-4 h-32 text-left group active:scale-[0.98] transition-all shadow-lg shadow-orange-500/20">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined text-[48px] text-white">star</span>
+</div>
+<div class="flex flex-col justify-between h-full relative z-10">
+<div class="bg-white/20 backdrop-blur-sm size-8 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">priority_high</span>
+</div>
+<div>
+<h3 class="text-white font-bold text-base leading-tight">Hatalarım ⭐</h3>
+<p class="text-orange-100 text-[9px] mt-0.5 opacity-90">Yanlışlarını gör ve düzelt</p>
+</div>
+</div>
+</button>
+<button class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-4 h-32 text-left group active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined text-[48px] text-white">psychology_alt</span>
+</div>
+<div class="flex flex-col justify-between h-full relative z-10">
+<div class="bg-white/20 backdrop-blur-sm size-8 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">play_arrow</span>
+</div>
+<div class="w-full">
+<h3 class="text-white font-bold text-base leading-tight">Antrenmana Başla</h3>
+<div class="w-full bg-black/20 h-1 rounded-full overflow-hidden mt-2">
+<div class="bg-white h-full w-[15%] rounded-full"></div>
+</div>
+</div>
+</div>
+</button>
+</div>
+</div>
+<div class="mb-6">
+<div class="flex items-center justify-between px-4 mb-3">
+<h2 class="text-[11px] font-bold text-white uppercase tracking-wider opacity-60">Hızlı Araçlar</h2>
+<span class="text-[10px] text-primary font-bold">Tümünü Gör</span>
+</div>
+<div class="flex gap-3 overflow-x-auto px-4 no-scrollbar pb-2">
+<button class="flex-none w-28 bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined text-lg">timer</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px]">Pomodoro</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">25:00 Odaklan</p>
+</div>
+</button>
+<button class="flex-none w-28 bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+<span class="material-symbols-outlined text-lg">assignment_turned_in</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px]">Konu Karnesi</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">Başarı Özeti</p>
+</div>
+</button>
+<button class="flex-none w-28 bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500">
+<span class="material-symbols-outlined text-lg">event_note</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px]">Deneme Takip</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">Sınav Takvimi</p>
+</div>
+</button>
+<button class="flex-none w-28 bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500">
+<span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px]">PDF Oluştur</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">Dışa Aktar</p>
+</div>
+</button>
+</div>
+</div>
+<div class="px-4">
+<div class="bg-card-dark rounded-2xl p-5 border border-white/5 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col">
+<h2 class="text-sm font-bold text-white">Çalışma Performansı</h2>
+<span class="text-[10px] text-text-secondary">Son 3 ayın aktivite özeti</span>
+</div>
+<div class="flex items-center gap-1.5 bg-background-dark/50 px-2 py-1 rounded-md">
+<div class="flex gap-1 items-center">
+<div class="size-2 rounded-sm bg-gray-800"></div>
+<div class="size-2 rounded-sm bg-primary/40"></div>
+<div class="size-2 rounded-sm bg-cyan-neon shadow-[0_0_4px_rgba(0,245,255,0.4)]"></div>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto no-scrollbar">
+<div class="grid grid-flow-col grid-rows-7 gap-1.5 min-w-max pb-2">
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-primary/30"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-primary/40"></div><div class="size-3 rounded-sm bg-primary/20"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-cyan-neon/20"></div><div class="size-3 rounded-sm bg-primary/60"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-primary/80"></div><div class="size-3 rounded-sm bg-cyan-neon shadow-[0_0_2px_#00f5ff]"></div><div class="size-3 rounded-sm bg-cyan-neon/80"></div><div class="size-3 rounded-sm bg-primary/50"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-primary/40"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-primary/20"></div><div class="size-3 rounded-sm bg-primary/40"></div><div class="size-3 rounded-sm bg-primary/60"></div><div class="size-3 rounded-sm bg-cyan-neon/40"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-cyan-neon shadow-[0_0_3px_#00f5ff]"></div><div class="size-3 rounded-sm bg-cyan-neon/90"></div><div class="size-3 rounded-sm bg-primary/90"></div><div class="size-3 rounded-sm bg-primary/70"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-primary/30"></div><div class="size-3 rounded-sm bg-primary/50"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-primary/40"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-cyan-neon/60"></div><div class="size-3 rounded-sm bg-cyan-neon shadow-[0_0_4px_#00f5ff]"></div><div class="size-3 rounded-sm bg-cyan-neon"></div><div class="size-3 rounded-sm bg-primary/80"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-cyan-neon/40"></div><div class="size-3 rounded-sm bg-cyan-neon/60"></div><div class="size-3 rounded-sm bg-cyan-neon/80"></div><div class="size-3 rounded-sm bg-cyan-neon"></div><div class="size-3 rounded-sm bg-primary/60"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-primary/30"></div><div class="size-3 rounded-sm bg-primary/50"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+<div class="size-3 rounded-sm bg-primary/20"></div><div class="size-3 rounded-sm bg-primary/40"></div><div class="size-3 rounded-sm bg-cyan-neon"></div><div class="size-3 rounded-sm bg-cyan-neon/80"></div><div class="size-3 rounded-sm border border-cyan-neon animate-pulse"></div><div class="size-3 rounded-sm bg-gray-800"></div><div class="size-3 rounded-sm bg-gray-800"></div>
+</div>
+</div>
+<div class="flex justify-between mt-3 text-[9px] text-text-secondary font-medium uppercase tracking-widest">
+<span>3 Ay Önce</span>
+<span>Bugün</span>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 z-50 w-full h-[88px] bg-background-dark/95 backdrop-blur-xl border-t border-white/5 pb-6">
+<div class="grid h-full grid-cols-5 mx-2">
+<button class="inline-flex flex-col items-center justify-center px-5 group text-primary">
+<span class="material-symbols-outlined mb-1 text-[26px]">home</span>
+<span class="text-[10px] font-medium">Ana Sayfa</span>
+</button>
+<button class="inline-flex flex-col items-center justify-center px-5 group text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined mb-1 text-[26px]">folder_open</span>
+<span class="text-[10px] font-medium">Kütüphane</span>
+</button>
+<div class="flex items-center justify-center -mt-6">
+<button class="flex items-center justify-center size-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-transform border-4 border-background-dark">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+</div>
+<button class="inline-flex flex-col items-center justify-center px-5 group text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined mb-1 text-[26px]">analytics</span>
+<span class="text-[10px] font-medium">Analiz</span>
+</button>
+<button class="inline-flex flex-col items-center justify-center px-5 group text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined mb-1 text-[26px]">widgets</span>
+<span class="text-[10px] font-medium">Araçlar</span>
+</button>
+</div>
+</div>
+
+</body></html>

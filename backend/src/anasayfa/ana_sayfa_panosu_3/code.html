@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modernize Ana Sayfa Panosu</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "primary-dark": "#0e45b5",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111318",
+                        "card-dark": "#1c1f27",
+                        "text-secondary": "#9da6b9",
+                        "cyan-neon": "#00f5ff",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: 100dvh;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white overflow-x-hidden selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col pb-28">
+<div class="flex items-center justify-between p-4 pt-6 sticky top-0 z-20 bg-background-dark/95 backdrop-blur-md border-b border-white/5">
+<div class="flex flex-col">
+<h1 class="text-lg font-bold text-white leading-tight">Merhaba, Ahmet 👋</h1>
+<span class="text-xs text-text-secondary mt-0.5">Bugün öğrenmek için harika bir gün!</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 bg-card-dark border border-white/10 rounded-full px-3 py-1.5">
+<span class="text-orange-500 text-sm">🔥</span>
+<span class="text-xs font-bold text-white">12 Gün</span>
+</div>
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 ring-2 ring-primary/20" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBw2Mmbtbol84MFYUmPLjcyFB-z45UkOUOa3fphkIDTh0OXwQ0zee5RS6FlsoTlVd_S08gyyFdI-g3M-t9d6NCg6HL99FlbvDDT0_rBrY8_lNRjazRMgqYQcTYsFLoEqzsDC8_JHsZNja-NeOD2rlu8Pi2LbosO2v4_hCjesEgv_0OymnCwPWgZMsFqj0Fkzg2p2yoqU3-YUA-dKkBEOz3cCsFnsGTpXPl0wZXCMyCdWfb0rKpYNRQeH-WRkMoVqxmrEzt79L64ZA");'></div>
+<div class="absolute bottom-0 right-0 size-2.5 bg-green-500 rounded-full border-2 border-background-dark"></div>
+</div>
+</div>
+</div>
+<div class="px-4 py-4">
+<div class="bg-card-dark rounded-2xl p-5 border border-cyan-neon/20 shadow-lg shadow-cyan-neon/5 relative overflow-hidden">
+<div class="absolute top-0 right-0 -mr-8 -mt-8 size-32 bg-cyan-neon/5 blur-3xl rounded-full"></div>
+<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col">
+<span class="text-text-secondary text-[10px] font-bold uppercase tracking-[0.15em] mb-1">Sınav Başarısı</span>
+<div class="flex items-end gap-2">
+<span class="text-[34px] font-bold text-white leading-none tracking-tight">74.0 <span class="text-lg font-medium text-cyan-neon">Net Ort.</span></span>
+<span class="text-green-400 text-sm font-bold mb-1">(+2.5)</span>
+</div>
+</div>
+<div class="relative size-20">
+<svg class="size-full -rotate-90" viewBox="0 0 36 36">
+<circle class="stroke-white/5" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-cyan-neon" cx="18" cy="18" fill="none" r="16" stroke-dasharray="82, 100" stroke-linecap="round" stroke-width="3" style="filter: drop-shadow(0 0 4px #00f5ff);"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-[10px] text-text-secondary font-bold">%82</span>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between text-[11px] font-bold px-1">
+<span class="text-cyan-neon">Hedefe Kalan: 16 Net</span>
+<span class="text-text-secondary">90 Hedef</span>
+</div>
+<div class="w-full h-2.5 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+<div class="h-full bg-gradient-to-r from-primary to-cyan-neon rounded-full" style="width: 82%;"></div>
+</div>
+</div>
+<div class="flex justify-center gap-1.5 mt-5">
+<div class="size-1.5 rounded-full bg-white/10"></div>
+<div class="size-1.5 rounded-full bg-white/10"></div>
+<div class="w-4 h-1.5 rounded-full bg-cyan-neon shadow-[0_0_8px_rgba(0,245,255,0.6)]"></div>
+</div>
+</div>
+</div>
+<div class="px-4 pb-4">
+<div class="grid grid-cols-2 gap-3">
+<button class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 p-4 h-28 text-left group active:scale-[0.98] transition-all shadow-lg shadow-orange-500/20">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined text-[40px] text-white">star</span>
+</div>
+<div class="flex flex-col justify-between h-full relative z-10">
+<div class="bg-white/20 backdrop-blur-sm size-7 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-base">priority_high</span>
+</div>
+<div>
+<h3 class="text-white font-bold text-sm leading-tight">Hatalarım ⭐</h3>
+<p class="text-orange-100 text-[9px] mt-0.5 opacity-90">Yanlışlarını gör</p>
+</div>
+</div>
+</button>
+<button class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-4 h-28 text-left group active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined text-[40px] text-white">psychology_alt</span>
+</div>
+<div class="flex flex-col justify-between h-full relative z-10">
+<div class="bg-white/20 backdrop-blur-sm size-7 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-base">play_arrow</span>
+</div>
+<div class="w-full">
+<h3 class="text-white font-bold text-sm leading-tight">Antrenmana Başla</h3>
+<div class="w-full bg-black/20 h-1 rounded-full overflow-hidden mt-1.5">
+<div class="bg-white h-full w-[15%] rounded-full"></div>
+</div>
+</div>
+</div>
+</button>
+</div>
+</div>
+<div class="mb-6">
+<div class="flex items-center justify-between px-4 mb-3">
+<h2 class="text-[10px] font-bold text-white uppercase tracking-widest opacity-60">Hızlı Araçlar</h2>
+<span class="text-[10px] text-primary font-bold">Tümünü Gör</span>
+</div>
+<div class="flex gap-3 overflow-x-auto px-4 no-scrollbar pb-2">
+<button class="flex-none w-[110px] bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined text-lg">timer</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px] whitespace-nowrap">Pomodoro</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">25:00 Odak</p>
+</div>
+</button>
+<button class="flex-none w-[110px] bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+<span class="material-symbols-outlined text-lg">assignment_turned_in</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px] whitespace-nowrap">Konu Karnesi</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">Başarı Özeti</p>
+</div>
+</button>
+<button class="flex-none w-[110px] bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500">
+<span class="material-symbols-outlined text-lg">event_note</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px] whitespace-nowrap">Deneme Takip</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">Sınavlar</p>
+</div>
+</button>
+<button class="flex-none w-[110px] bg-card-dark rounded-xl border border-white/5 p-3 flex flex-col gap-2 active:scale-95 transition-transform">
+<div class="size-7 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500">
+<span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+</div>
+<div>
+<h4 class="text-white font-bold text-[11px] whitespace-nowrap">PDF Oluştur</h4>
+<p class="text-text-secondary text-[8px] mt-0.5">Dışa Aktar</p>
+</div>
+</button>
+</div>
+</div>
+<div class="px-4">
+<div class="bg-card-dark rounded-2xl p-5 border border-white/5 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col">
+<h2 class="text-sm font-bold text-white">Çalışma Performansı</h2>
+<span class="text-[10px] text-text-secondary">Son aylardaki aktivite yoğunluğu</span>
+</div>
+<div class="flex items-center gap-1.5 bg-background-dark/50 px-2 py-1 rounded-md">
+<div class="flex gap-1">
+<div class="size-2 rounded-sm bg-gray-800"></div>
+<div class="size-2 rounded-sm bg-primary/40"></div>
+<div class="size-2 rounded-sm bg-cyan-neon"></div>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto no-scrollbar">
+<div class="grid grid-flow-col grid-rows-7 gap-1 min-w-max pb-1">
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-primary/30"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-primary/40"></div><div class="size-3 rounded-[2px] bg-primary/20"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-cyan-neon/20"></div><div class="size-3 rounded-[2px] bg-primary/60"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-primary/80"></div><div class="size-3 rounded-[2px] bg-cyan-neon"></div><div class="size-3 rounded-[2px] bg-cyan-neon/80"></div><div class="size-3 rounded-[2px] bg-primary/50"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-primary/40"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-primary/20"></div><div class="size-3 rounded-[2px] bg-primary/40"></div><div class="size-3 rounded-[2px] bg-primary/60"></div><div class="size-3 rounded-[2px] bg-cyan-neon/40"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-cyan-neon"></div><div class="size-3 rounded-[2px] bg-cyan-neon/90"></div><div class="size-3 rounded-[2px] bg-primary/90"></div><div class="size-3 rounded-[2px] bg-primary/70"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-primary/30"></div><div class="size-3 rounded-[2px] bg-primary/50"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-primary/40"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-cyan-neon/60"></div><div class="size-3 rounded-[2px] bg-cyan-neon"></div><div class="size-3 rounded-[2px] bg-cyan-neon"></div><div class="size-3 rounded-[2px] bg-primary/80"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-cyan-neon/40"></div><div class="size-3 rounded-[2px] bg-cyan-neon/60"></div><div class="size-3 rounded-[2px] bg-cyan-neon/80"></div><div class="size-3 rounded-[2px] bg-cyan-neon"></div><div class="size-3 rounded-[2px] bg-primary/60"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-primary/30"></div><div class="size-3 rounded-[2px] bg-primary/50"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+<div class="size-3 rounded-[2px] bg-primary/20"></div><div class="size-3 rounded-[2px] bg-primary/40"></div><div class="size-3 rounded-[2px] bg-cyan-neon"></div><div class="size-3 rounded-[2px] bg-cyan-neon/80"></div><div class="size-3 rounded-[2px] bg-cyan-neon ring-1 ring-cyan-neon/50"></div><div class="size-3 rounded-[2px] bg-gray-800"></div><div class="size-3 rounded-[2px] bg-gray-800"></div>
+</div>
+</div>
+<div class="flex justify-between mt-2 text-[9px] text-text-secondary font-medium px-1">
+<span>Oca</span>
+<span>Şub</span>
+<span>Mar</span>
+<span class="text-white">Bugün</span>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 z-50 w-full h-[88px] bg-background-dark/95 backdrop-blur-xl border-t border-white/5 pb-6">
+<div class="grid h-full grid-cols-5 mx-2">
+<button class="inline-flex flex-col items-center justify-center px-5 group text-primary">
+<span class="material-symbols-outlined mb-1 text-[26px]">home</span>
+<span class="text-[10px] font-medium">Ana Sayfa</span>
+</button>
+<button class="inline-flex flex-col items-center justify-center px-5 group text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined mb-1 text-[26px]">folder_open</span>
+<span class="text-[10px] font-medium">Kütüphane</span>
+</button>
+<div class="flex items-center justify-center -mt-6">
+<button class="flex items-center justify-center size-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 hover:scale-105 active:scale-95 transition-transform border-4 border-background-dark">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+</div>
+<button class="inline-flex flex-col items-center justify-center px-5 group text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined mb-1 text-[26px]">analytics</span>
+<span class="text-[10px] font-medium">Analiz</span>
+</button>
+<button class="inline-flex flex-col items-center justify-center px-5 group text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined mb-1 text-[26px]">widgets</span>
+<span class="text-[10px] font-medium">Araçlar</span>
+</button>
+</div>
+</div>
+</div>
+
+</body></html>

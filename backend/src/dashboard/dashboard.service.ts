@@ -18,6 +18,8 @@ export class DashboardService {
       weeklyActivity,
       motivation,
       quickStats,
+      focusAnalysis,
+      examSuccess,
     ] = await Promise.all([
       this.getOverview(userId),
       this.getSubjects(userId),
@@ -25,6 +27,8 @@ export class DashboardService {
       this.getWeeklyActivity(userId),
       this.getMotivation(userId),
       this.getQuickStats(userId),
+      this.getFocusAnalysis(userId),
+      this.getExamSuccess(userId),
     ]);
 
     return {
@@ -34,7 +38,191 @@ export class DashboardService {
       weeklyActivity,
       motivation,
       quickStats,
+      focusAnalysis,
+      examSuccess,
     };
+  }
+
+  /**
+   * 7. ODAKLANMA ANALİZİ (Toplam süre, haftalık değişim, en verimli saat, dağılım)
+   */
+  private async getFocusAnalysis(userId: string) {
+    try {
+      // Toplam odaklanma (dakika)
+      const totalRes = await this.dataSource.query(
+        `
+        SELECT
+          COALESCE(SUM(duration), 0)::int AS total_minutes
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+        `,
+        [userId],
+      );
+
+      // Bu hafta ve geçen hafta odaklanma (dakika)
+      const weeklyRes = await this.dataSource.query(
+        `
+        WITH this_week AS (
+          SELECT COALESCE(SUM(duration), 0)::int AS minutes
+          FROM study_sessions
+          WHERE user_id = $1::uuid
+            AND status = 'COMPLETED'
+            AND started_at >= CURRENT_DATE - INTERVAL '6 days'
+        ),
+        last_week AS (
+          SELECT COALESCE(SUM(duration), 0)::int AS minutes
+          FROM study_sessions
+          WHERE user_id = $1::uuid
+            AND status = 'COMPLETED'
+            AND started_at >= CURRENT_DATE - INTERVAL '13 days'
+            AND started_at <  CURRENT_DATE - INTERVAL '6 days'
+        )
+        SELECT this_week.minutes  AS this_week,
+               last_week.minutes  AS last_week
+        FROM this_week, last_week
+        `,
+        [userId],
+      );
+
+      const totalMinutes = Number(totalRes[0]?.total_minutes || 0);
+      const thisWeek = Number(weeklyRes[0]?.this_week || 0);
+      const lastWeek = Number(weeklyRes[0]?.last_week || 0);
+      const weeklyDelta =
+        lastWeek === 0 ? (thisWeek > 0 ? 100 : 0) : Number((((thisWeek - lastWeek) / lastWeek) * 100).toFixed(2));
+
+      // En verimli saat (son 30 gün)
+      const productiveRes = await this.dataSource.query(
+        `
+        SELECT
+          EXTRACT(HOUR FROM started_at)::int AS hour,
+          SUM(duration)::int AS total_minutes
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+          AND started_at >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY hour
+        ORDER BY total_minutes DESC
+        LIMIT 1
+        `,
+        [userId],
+      );
+
+      const productiveHour = productiveRes[0]
+        ? {
+            from: Number(productiveRes[0].hour),
+            to: (Number(productiveRes[0].hour) + 1) % 24,
+          }
+        : null;
+
+      // Pomodoro vs Free timer dağılımı (son 30 gün)
+      const distRes = await this.dataSource.query(
+        `
+        SELECT
+          timer_type,
+          COALESCE(SUM(duration), 0)::int AS minutes
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+          AND started_at >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY timer_type
+        `,
+        [userId],
+      );
+
+      const distribution = distRes.map((r) => ({
+        type: r.timer_type,
+        minutes: Number(r.minutes || 0),
+      }));
+
+      return {
+        totalMinutes,
+        weeklyDelta,
+        productiveHour,
+        distribution,
+      };
+    } catch (error) {
+      console.error('Focus analysis fetch error:', error);
+      return {
+        totalMinutes: 0,
+        weeklyDelta: 0,
+        productiveHour: null,
+        distribution: [],
+      };
+    }
+  }
+
+  /**
+   * 8. SINAV BAŞARISI (Deneme sınavları ve hedef net)
+   */
+  private async getExamSuccess(userId: string) {
+    try {
+      // Son deneme ve önceki deneme (aynı exam_code)
+      const lastRes = await this.dataSource.query(
+        `
+        SELECT id, exam_code, exam_name, exam_date, total_net
+        FROM mock_exams
+        WHERE user_id = $1::uuid
+        ORDER BY exam_date DESC
+        LIMIT 2
+        `,
+        [userId],
+      );
+
+      const lastExam = lastRes[0] || null;
+      const prevExam = lastRes[1] || null;
+      const examCode = lastExam?.exam_code || null;
+
+      // Hedef net
+      let targetNet = 0;
+      if (examCode) {
+        const goalRes = await this.dataSource.query(
+          `
+          SELECT target_net
+          FROM exam_target_goals
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+          LIMIT 1
+          `,
+          [userId, examCode],
+        );
+        targetNet = Number(goalRes[0]?.target_net || 0);
+      }
+
+      const currentNet = lastExam ? Number(lastExam.total_net || 0) : 0;
+      const previousNet = prevExam ? Number(prevExam.total_net || 0) : 0;
+      const delta = Number((currentNet - previousNet).toFixed(2));
+      const progressPercent = targetNet > 0 ? Number(((currentNet / targetNet) * 100).toFixed(2)) : 0;
+      const remainingNet = targetNet > 0 ? Number((targetNet - currentNet).toFixed(2)) : 0;
+
+      return {
+        examCode,
+        currentNet,
+        previousNet,
+        delta, // Net Ort. artışı/azalışı
+        targetNet,
+        remainingNet,
+        progressPercent,
+        lastExam: lastExam
+          ? {
+              examName: lastExam.exam_name,
+              examDate: lastExam.exam_date,
+            }
+          : null,
+      };
+    } catch (error) {
+      console.error('Exam success fetch error:', error);
+      return {
+        examCode: null,
+        currentNet: 0,
+        previousNet: 0,
+        delta: 0,
+        targetNet: 0,
+        remainingNet: 0,
+        progressPercent: 0,
+        lastExam: null,
+      };
+    }
   }
 
   // 1. GENEL İSTATİSTİKLER
