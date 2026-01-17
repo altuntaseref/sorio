@@ -9,6 +9,134 @@ export class AnalyticsService {
     private readonly motivationService: MotivationService,
   ) {}
 
+  private normalizeDate(value: Date | string) {
+    if (value instanceof Date) {
+      return value;
+    }
+
+    return new Date(`${value}T00:00:00`);
+  }
+
+  private formatDateYmd(date: Date | string) {
+    const normalized = this.normalizeDate(date);
+    const year = normalized.getFullYear();
+    const month = `${normalized.getMonth() + 1}`.padStart(2, '0');
+    const day = `${normalized.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private buildRange(range: 'week' | 'month' | 'all') {
+    const now = new Date();
+    const endExclusive = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    );
+
+    if (range === 'all') {
+      return {
+        range,
+        start: null,
+        endExclusive,
+        previousStart: null,
+        previousEndExclusive: null,
+        days: null,
+      };
+    }
+
+    const days = range === 'week' ? 7 : 30;
+    const start = new Date(endExclusive);
+    start.setDate(start.getDate() - days);
+
+    const previousEndExclusive = new Date(start);
+    const previousStart = new Date(start);
+    previousStart.setDate(previousStart.getDate() - days);
+
+    return {
+      range,
+      start,
+      endExclusive,
+      previousStart,
+      previousEndExclusive,
+      days,
+    };
+  }
+
+  private buildRangeInfo(rangeInfo: ReturnType<AnalyticsService['buildRange']>) {
+    const toDateString = (date: Date | null) =>
+      date ? this.formatDateYmd(date) : null;
+
+    return {
+      range: rangeInfo.range,
+      startDate: toDateString(rangeInfo.start),
+      endDate: rangeInfo.endExclusive
+        ? toDateString(new Date(rangeInfo.endExclusive.getTime() - 86400000))
+        : null,
+      previousStartDate: toDateString(rangeInfo.previousStart),
+      previousEndDate: rangeInfo.previousEndExclusive
+        ? toDateString(
+            new Date(rangeInfo.previousEndExclusive.getTime() - 86400000),
+          )
+        : null,
+    };
+  }
+
+  private calculatePercentageChange(current: number, previous: number) {
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
+
+    return Number((((current - previous) / previous) * 100).toFixed(2));
+  }
+
+  private async hasStudySessionsTimerTypeColumn() {
+    try {
+      const result = await this.dataSource.query(
+        `
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'study_sessions'
+          AND column_name = 'timer_type'
+        LIMIT 1
+      `,
+      );
+      return result.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  private pickPeakWindow(hourlyMinutes: Array<{ hour: number; minutes: number }>) {
+    if (!hourlyMinutes.length) {
+      return null;
+    }
+
+    const minutesByHour = new Array(24).fill(0);
+    hourlyMinutes.forEach((entry) => {
+      minutesByHour[entry.hour] = entry.minutes;
+    });
+
+    let bestStart = 0;
+    let bestTotal = -1;
+
+    for (let start = 0; start < 24; start += 1) {
+      const total =
+        minutesByHour[start] +
+        minutesByHour[(start + 1) % 24] +
+        minutesByHour[(start + 2) % 24];
+
+      if (total > bestTotal) {
+        bestTotal = total;
+        bestStart = start;
+      }
+    }
+
+    return {
+      from: bestStart,
+      to: (bestStart + 3) % 24,
+    };
+  }
+
   async getAnalyticsOverview(userId: string) {
     try {
       const totalStatsQuery = this.dataSource.query(
@@ -100,7 +228,7 @@ export class AnalyticsService {
 
       const weeklyActivity = (weeklyActivityResult || []).map(w => ({
         ...w,
-        week: new Date(w.week).toISOString().split('T')[0], // Format as YYYY-MM-DD
+        week: this.formatDateYmd(new Date(w.week)),
         isRecordWeek:
           w.questionsSolved === recordWeekQuestionsSolved &&
           recordWeekQuestionsSolved > 0,
@@ -289,6 +417,912 @@ export class AnalyticsService {
       return { subjects };
     } catch (error) {
       return { subjects: [] };
+    }
+  }
+
+  async getAnalysisGeneral(userId: string, range: 'week' | 'month' | 'all') {
+    const rangeInfo = this.buildRange(range);
+    const period = this.buildRangeInfo(rangeInfo);
+
+    try {
+      const studyParams: any[] = [userId];
+      let studyDateFilter = '';
+      if (rangeInfo.start) {
+        studyParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        studyDateFilter = 'AND started_at >= $2 AND started_at < $3';
+      }
+
+      const [studyTotalRes, studyPrevRes] = await Promise.all([
+        this.dataSource.query(
+          `
+          SELECT COALESCE(SUM(duration), 0)::int AS minutes
+          FROM study_sessions
+          WHERE user_id = $1::uuid
+            AND status = 'COMPLETED'
+            ${studyDateFilter}
+        `,
+          studyParams,
+        ),
+        rangeInfo.previousStart
+          ? this.dataSource.query(
+              `
+              SELECT COALESCE(SUM(duration), 0)::int AS minutes
+              FROM study_sessions
+              WHERE user_id = $1::uuid
+                AND status = 'COMPLETED'
+                AND started_at >= $2
+                AND started_at < $3
+            `,
+              [userId, rangeInfo.previousStart, rangeInfo.previousEndExclusive],
+            )
+          : Promise.resolve([{ minutes: 0 }]),
+      ]);
+
+      const totalStudyMinutes = Number(studyTotalRes[0]?.minutes || 0);
+      const previousStudyMinutes = Number(studyPrevRes[0]?.minutes || 0);
+      const studyDeltaPercent = this.calculatePercentageChange(
+        totalStudyMinutes,
+        previousStudyMinutes,
+      );
+
+      const questionParams: any[] = [userId];
+      let questionDateFilter = '';
+      if (rangeInfo.start) {
+        questionParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        questionDateFilter = 'AND qa.answered_at >= $2 AND qa.answered_at < $3';
+      }
+
+      const questionRes = await this.dataSource.query(
+        `
+        SELECT
+          COUNT(*)::int AS "totalSolved",
+          COALESCE(SUM(CASE WHEN qa.is_correct THEN 1 ELSE 0 END), 0)::int AS "correctCount",
+          COALESCE(SUM(CASE WHEN qa.is_correct = false THEN 1 ELSE 0 END), 0)::int AS "incorrectCount"
+        FROM quiz_answers qa
+        INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
+        WHERE qs.user_id = $1::uuid
+        ${questionDateFilter}
+      `,
+        questionParams,
+      );
+
+      const totalSolved = Number(questionRes[0]?.totalSolved || 0);
+      const correctCount = Number(questionRes[0]?.correctCount || 0);
+      const incorrectCount = Number(questionRes[0]?.incorrectCount || 0);
+      const accuracyPercent =
+        totalSolved > 0
+          ? Number(((correctCount / totalSolved) * 100).toFixed(2))
+          : 0;
+
+      const focusDays = rangeInfo.days ?? 7;
+      const focusStart = new Date(rangeInfo.endExclusive);
+      focusStart.setUTCDate(focusStart.getUTCDate() - focusDays);
+
+      const dailyFocusRes = await this.dataSource.query(
+        `
+        WITH days AS (
+          SELECT generate_series($2::date, ($3::date - interval '1 day')::date, interval '1 day')::date AS date
+        )
+        SELECT
+          d.date,
+          COALESCE(SUM(s.duration), 0)::int AS minutes
+        FROM days d
+        LEFT JOIN study_sessions s
+          ON DATE(s.started_at) = d.date
+          AND s.user_id = $1::uuid
+          AND s.status = 'COMPLETED'
+        GROUP BY d.date
+        ORDER BY d.date
+      `,
+        [userId, focusStart, rangeInfo.endExclusive],
+      );
+
+      const hourlyParams: any[] = [userId];
+      let hourlyDateFilter = '';
+      if (rangeInfo.start) {
+        hourlyParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        hourlyDateFilter = 'AND started_at >= $2 AND started_at < $3';
+      }
+
+      const hourlyRes = await this.dataSource.query(
+        `
+        SELECT
+          EXTRACT(HOUR FROM started_at)::int AS hour,
+          COALESCE(SUM(duration), 0)::int AS minutes
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+          ${hourlyDateFilter}
+        GROUP BY hour
+      `,
+        hourlyParams,
+      );
+
+      const peakHour = this.pickPeakWindow(
+        (hourlyRes || []).map((row) => ({
+          hour: Number(row.hour),
+          minutes: Number(row.minutes || 0),
+        })),
+      );
+
+      const lastExamRangeParams: any[] = [userId];
+      let lastExamDateFilter = '';
+      if (rangeInfo.start) {
+        lastExamRangeParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        lastExamDateFilter = 'AND exam_date >= $2 AND exam_date < $3';
+      }
+
+      const lastExams = await this.dataSource.query(
+        `
+        SELECT exam_code, exam_name, exam_date, total_net
+        FROM mock_exams
+        WHERE user_id = $1::uuid
+        ${lastExamDateFilter}
+        ORDER BY exam_date DESC
+        LIMIT 2
+      `,
+        lastExamRangeParams,
+      );
+
+      let examCode = lastExams[0]?.exam_code || null;
+      if (!examCode) {
+        const fallback = await this.dataSource.query(
+          `
+          SELECT exam_code, exam_name, exam_date, total_net
+          FROM mock_exams
+          WHERE user_id = $1::uuid
+          ORDER BY exam_date DESC
+          LIMIT 2
+        `,
+          [userId],
+        );
+        examCode = fallback[0]?.exam_code || null;
+        if (!lastExams.length) {
+          lastExams.push(...fallback);
+        }
+      }
+
+      let averageNet = 0;
+      let targetNet = 0;
+      let progressPercent = 0;
+      let remainingNet = 0;
+
+      if (examCode) {
+        const averageParams: any[] = [userId, examCode];
+        let averageDateFilter = '';
+        if (rangeInfo.start) {
+          averageParams.push(rangeInfo.start, rangeInfo.endExclusive);
+          averageDateFilter = 'AND exam_date >= $3 AND exam_date < $4';
+        }
+
+        const averageRes = await this.dataSource.query(
+          `
+          SELECT COALESCE(AVG(total_net), 0) AS average_net
+          FROM mock_exams
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+            ${averageDateFilter}
+        `,
+          averageParams,
+        );
+
+        averageNet = Number(averageRes[0]?.average_net || 0);
+
+        const targetRes = await this.dataSource.query(
+          `
+          SELECT target_net
+          FROM exam_target_goals
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+          LIMIT 1
+        `,
+          [userId, examCode],
+        );
+
+        targetNet = Number(targetRes[0]?.target_net || 0);
+        remainingNet = targetNet > 0 ? Number((targetNet - averageNet).toFixed(2)) : 0;
+        progressPercent =
+          targetNet > 0 ? Number(((averageNet / targetNet) * 100).toFixed(2)) : 0;
+      }
+
+      const lastNet = Number(lastExams[0]?.total_net || 0);
+      const previousNet = Number(lastExams[1]?.total_net || 0);
+      const netDelta = Number((lastNet - previousNet).toFixed(2));
+
+      const motivation = await this.motivationService.getMotivationForUser(userId);
+
+      return {
+        period,
+        coachInsight: {
+          ...motivation,
+          ctaLabel: 'Detaylı Raporu Gör',
+        },
+        totalProductivity: {
+          totalStudyMinutes,
+          studyDeltaPercent,
+          questionsSolved: totalSolved,
+          accuracyPercent,
+          correctCount,
+          incorrectCount,
+        },
+        timeAnalysis: {
+          dailyFocus: (dailyFocusRes || []).map((row) => ({
+            date: this.formatDateYmd(row.date),
+            minutes: Number(row.minutes || 0),
+          })),
+          peakHour,
+        },
+        examSummary: {
+          examCode,
+          averageNet: Number(averageNet.toFixed(2)),
+          targetNet,
+          remainingNet,
+          progressPercent,
+          lastExam: lastExams[0]
+            ? {
+                examName: lastExams[0].exam_name,
+                examDate: lastExams[0].exam_date,
+                net: lastNet,
+                delta: netDelta,
+              }
+            : null,
+        },
+      };
+    } catch (error) {
+      return {
+        period,
+        coachInsight: {
+          title: 'Başarıya Giden Yoldasın! 🚀',
+          message: 'Her gün biraz daha ilerliyorsun!',
+          type: 'general',
+          ctaLabel: 'Detaylı Raporu Gör',
+        },
+        totalProductivity: {
+          totalStudyMinutes: 0,
+          studyDeltaPercent: 0,
+          questionsSolved: 0,
+          accuracyPercent: 0,
+          correctCount: 0,
+          incorrectCount: 0,
+        },
+        timeAnalysis: {
+          dailyFocus: [],
+          peakHour: null,
+        },
+        examSummary: {
+          examCode: null,
+          averageNet: 0,
+          targetNet: 0,
+          remainingNet: 0,
+          progressPercent: 0,
+          lastExam: null,
+        },
+      };
+    }
+  }
+
+  async getAnalysisQuestions(userId: string, range: 'week' | 'month' | 'all') {
+    const rangeInfo = this.buildRange(range);
+    const period = this.buildRangeInfo(rangeInfo);
+
+    try {
+      const subjectParams: any[] = [userId];
+      let subjectDateFilter = '';
+      if (rangeInfo.start) {
+        subjectParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        subjectDateFilter = 'AND qa.answered_at >= $2 AND qa.answered_at < $3';
+      }
+
+      const subjectRes = await this.dataSource.query(
+        `
+        SELECT
+          s.id AS "subjectId",
+          s.name AS "subjectName",
+          COUNT(qa.id)::int AS "totalAttempts",
+          COALESCE(SUM(CASE WHEN qa.is_correct THEN 1 ELSE 0 END), 0)::int AS "correctCount",
+          COALESCE(SUM(CASE WHEN qa.is_correct = false THEN 1 ELSE 0 END), 0)::int AS "incorrectCount"
+        FROM quiz_answers qa
+        INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
+        INNER JOIN questions q ON qa.question_id = q.id
+        INNER JOIN subjects s ON q.subject_id = s.id
+        WHERE qs.user_id = $1::uuid
+        ${subjectDateFilter}
+        GROUP BY s.id, s.name
+        ORDER BY "totalAttempts" DESC
+      `,
+        subjectParams,
+      );
+
+      const subjectPerformance = (subjectRes || []).map((row) => {
+        const totalAttempts = Number(row.totalAttempts || 0);
+        const correctCount = Number(row.correctCount || 0);
+        const incorrectCount = Number(row.incorrectCount || 0);
+        const accuracyPercent =
+          totalAttempts > 0
+            ? Number(((correctCount / totalAttempts) * 100).toFixed(2))
+            : 0;
+
+        return {
+          subjectId: row.subjectId,
+          subjectName: row.subjectName,
+          totalAttempts,
+          correctCount,
+          incorrectCount,
+          accuracyPercent,
+        };
+      });
+
+      const topicParams: any[] = [userId];
+      let topicDateFilter = '';
+      if (rangeInfo.start) {
+        topicParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        topicDateFilter = 'AND qa.answered_at >= $2 AND qa.answered_at < $3';
+      }
+
+      const weakTopicsRes = await this.dataSource.query(
+        `
+        SELECT
+          t.id AS "topicId",
+          t.name AS "topicName",
+          s.name AS "subjectName",
+          COUNT(qa.id)::int AS "totalAttempts",
+          COALESCE(SUM(CASE WHEN qa.is_correct THEN 1 ELSE 0 END), 0)::int AS "correctCount",
+          COALESCE(SUM(CASE WHEN qa.is_correct = false THEN 1 ELSE 0 END), 0)::int AS "incorrectCount"
+        FROM quiz_answers qa
+        INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
+        INNER JOIN questions q ON qa.question_id = q.id
+        INNER JOIN topics t ON q.topic_id = t.id
+        INNER JOIN subjects s ON q.subject_id = s.id
+        WHERE qs.user_id = $1::uuid
+        ${topicDateFilter}
+        GROUP BY t.id, t.name, s.name
+        HAVING COUNT(qa.id) >= 5
+        ORDER BY
+          (COALESCE(SUM(CASE WHEN qa.is_correct THEN 1 ELSE 0 END), 0)::float / NULLIF(COUNT(qa.id), 0)) ASC
+        LIMIT 5
+      `,
+        topicParams,
+      );
+
+      const weakTopics = (weakTopicsRes || []).map((row) => {
+        const totalAttempts = Number(row.totalAttempts || 0);
+        const correctCount = Number(row.correctCount || 0);
+        const incorrectCount = Number(row.incorrectCount || 0);
+        const accuracyPercent =
+          totalAttempts > 0
+            ? Number(((correctCount / totalAttempts) * 100).toFixed(2))
+            : 0;
+
+        return {
+          topicId: row.topicId,
+          topicName: row.topicName,
+          subjectName: row.subjectName,
+          totalAttempts,
+          correctCount,
+          incorrectCount,
+          accuracyPercent,
+        };
+      });
+
+      const [
+        totalQuestionsRes,
+        learnedRes,
+        incorrectRes,
+        newRes,
+      ] = await Promise.all([
+        this.dataSource.query(
+          `
+          SELECT COUNT(*)::int AS total
+          FROM questions
+          WHERE user_id = $1::uuid
+        `,
+          [userId],
+        ),
+        this.dataSource.query(
+          `
+          SELECT COUNT(*)::int AS total
+          FROM question_statistics
+          WHERE user_id = $1::uuid
+            AND mastery_level >= 3
+        `,
+          [userId],
+        ),
+        this.dataSource.query(
+          `
+          SELECT COUNT(*)::int AS total
+          FROM question_statistics
+          WHERE user_id = $1::uuid
+            AND incorrect_count > 0
+        `,
+          [userId],
+        ),
+        this.dataSource.query(
+          `
+          SELECT COUNT(*)::int AS total
+          FROM questions q
+          LEFT JOIN question_statistics qs
+            ON qs.question_id = q.id
+            AND qs.user_id = q.user_id
+          WHERE q.user_id = $1::uuid
+            AND (qs.id IS NULL OR qs.total_attempts = 0)
+        `,
+          [userId],
+        ),
+      ]);
+
+      return {
+        period,
+        subjectPerformance,
+        weakTopics,
+        questionPool: {
+          total: Number(totalQuestionsRes[0]?.total || 0),
+          learned: Number(learnedRes[0]?.total || 0),
+          incorrect: Number(incorrectRes[0]?.total || 0),
+          new: Number(newRes[0]?.total || 0),
+        },
+      };
+    } catch (error) {
+      return {
+        period,
+        subjectPerformance: [],
+        weakTopics: [],
+        questionPool: {
+          total: 0,
+          learned: 0,
+          incorrect: 0,
+          new: 0,
+        },
+      };
+    }
+  }
+
+  async getAnalysisTime(userId: string, range: 'week' | 'month' | 'all') {
+    const rangeInfo = this.buildRange(range);
+    const period = this.buildRangeInfo(rangeInfo);
+
+    try {
+      const hasTimerType = await this.hasStudySessionsTimerTypeColumn();
+      const rangeParams: any[] = [userId];
+      let rangeDateFilter = '';
+      if (rangeInfo.start) {
+        rangeParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        rangeDateFilter = 'AND started_at >= $2 AND started_at < $3';
+      }
+
+      const focusStart = rangeInfo.start ?? new Date(rangeInfo.endExclusive);
+      if (!rangeInfo.start) {
+        focusStart.setDate(focusStart.getDate() - 7);
+      }
+
+      const weeklyFocusRes = await this.dataSource.query(
+        hasTimerType
+          ? `
+            WITH days AS (
+              SELECT generate_series($2::date, ($3::date - interval '1 day')::date, interval '1 day')::date AS date
+            )
+            SELECT
+              d.date,
+              COALESCE(SUM(CASE WHEN ss.timer_type = 'POMODORO' THEN ss.duration ELSE 0 END), 0)::int AS "pomodoroMinutes",
+              COALESCE(SUM(CASE WHEN ss.timer_type = 'FREE_TIMER' THEN ss.duration ELSE 0 END), 0)::int AS "freeTimerMinutes"
+            FROM days d
+            LEFT JOIN study_sessions ss
+              ON DATE(ss.started_at) = d.date
+              AND ss.user_id = $1::uuid
+              AND ss.status = 'COMPLETED'
+            GROUP BY d.date
+            ORDER BY d.date
+          `
+          : `
+            WITH days AS (
+              SELECT generate_series($2::date, ($3::date - interval '1 day')::date, interval '1 day')::date AS date
+            )
+            SELECT
+              d.date,
+              COALESCE(SUM(ss.duration), 0)::int AS "pomodoroMinutes",
+              0::int AS "freeTimerMinutes"
+            FROM days d
+            LEFT JOIN study_sessions ss
+              ON DATE(ss.started_at) = d.date
+              AND ss.user_id = $1::uuid
+              AND ss.status = 'COMPLETED'
+            GROUP BY d.date
+            ORDER BY d.date
+          `,
+        [userId, focusStart, rangeInfo.endExclusive],
+      );
+
+      const subjectParams: any[] = [userId];
+      let subjectDateFilter = '';
+      if (rangeInfo.start) {
+        subjectParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        subjectDateFilter = 'AND ss.started_at >= $2 AND ss.started_at < $3';
+      }
+
+      const subjectRes = await this.dataSource.query(
+        `
+        SELECT
+          s.id AS "subjectId",
+          s.name AS "subjectName",
+          COALESCE(SUM(ss.duration), 0)::int AS "totalMinutes"
+        FROM study_sessions ss
+        INNER JOIN subjects s ON ss.subject_id = s.id
+        WHERE ss.user_id = $1::uuid
+          AND ss.status = 'COMPLETED'
+          AND ss.subject_id IS NOT NULL
+          ${subjectDateFilter}
+        GROUP BY s.id, s.name
+        ORDER BY "totalMinutes" DESC
+      `,
+        subjectParams,
+      );
+
+      const dayCountRes = await this.dataSource.query(
+        `
+        SELECT COUNT(DISTINCT DATE(started_at))::int AS days
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+          ${rangeDateFilter}
+      `,
+        rangeParams,
+      );
+
+      const rangeDays =
+        rangeInfo.days ?? Math.max(Number(dayCountRes[0]?.days || 0), 1);
+      const weeksInRange = Math.max(Math.ceil(rangeDays / 7), 1);
+      const monthsInRange = Math.max(Math.ceil(rangeDays / 30), 1);
+
+      const subjectDistribution = (subjectRes || []).map((row) => {
+        const totalMinutes = Number(row.totalMinutes || 0);
+        return {
+          subjectId: row.subjectId,
+          subjectName: row.subjectName,
+          totalMinutes,
+          dailyAverageMinutes: Number((totalMinutes / rangeDays).toFixed(2)),
+          weeklyAverageMinutes: Number((totalMinutes / weeksInRange).toFixed(2)),
+          monthlyAverageMinutes: Number((totalMinutes / monthsInRange).toFixed(2)),
+        };
+      });
+
+      const totalMinutesRes = await this.dataSource.query(
+        `
+        SELECT COALESCE(SUM(duration), 0)::int AS minutes
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+          ${rangeDateFilter}
+      `,
+        rangeParams,
+      );
+
+      const periodTotalMinutes = Number(totalMinutesRes[0]?.minutes || 0);
+
+      const longestRes = await this.dataSource.query(
+        hasTimerType
+          ? `
+            SELECT duration, timer_type
+            FROM study_sessions
+            WHERE user_id = $1::uuid
+              AND status = 'COMPLETED'
+              ${rangeDateFilter}
+            ORDER BY duration DESC
+            LIMIT 1
+          `
+          : `
+            SELECT duration, NULL::varchar AS timer_type
+            FROM study_sessions
+            WHERE user_id = $1::uuid
+              AND status = 'COMPLETED'
+              ${rangeDateFilter}
+            ORDER BY duration DESC
+            LIMIT 1
+          `,
+        rangeParams,
+      );
+
+      const heatmapRes = await this.dataSource.query(
+        `
+        SELECT
+          EXTRACT(DOW FROM started_at)::int AS "dayOfWeek",
+          EXTRACT(HOUR FROM started_at)::int AS hour,
+          COALESCE(SUM(duration), 0)::int AS minutes
+        FROM study_sessions
+        WHERE user_id = $1::uuid
+          AND status = 'COMPLETED'
+          ${rangeDateFilter}
+        GROUP BY "dayOfWeek", hour
+        ORDER BY "dayOfWeek", hour
+      `,
+        rangeParams,
+      );
+
+      return {
+        period,
+        weeklyFocus: (weeklyFocusRes || []).map((row) => ({
+          date: this.formatDateYmd(row.date),
+          pomodoroMinutes: Number(row.pomodoroMinutes || 0),
+          freeTimerMinutes: Number(row.freeTimerMinutes || 0),
+          totalMinutes:
+            Number(row.pomodoroMinutes || 0) + Number(row.freeTimerMinutes || 0),
+        })),
+        subjectDistribution,
+        totals: {
+          periodTotalMinutes,
+          dailyAverageMinutes: Number(
+            (periodTotalMinutes / rangeDays).toFixed(2),
+          ),
+          longestSessionMinutes: Number(longestRes[0]?.duration || 0),
+          longestSessionType: longestRes[0]?.timer_type || null,
+        },
+        heatmap: (heatmapRes || []).map((row) => ({
+          dayOfWeek: Number(row.dayOfWeek),
+          hour: Number(row.hour),
+          minutes: Number(row.minutes || 0),
+        })),
+      };
+    } catch (error) {
+      return {
+        period,
+        weeklyFocus: [],
+        subjectDistribution: [],
+        totals: {
+          periodTotalMinutes: 0,
+          dailyAverageMinutes: 0,
+          longestSessionMinutes: 0,
+          longestSessionType: null,
+        },
+        heatmap: [],
+      };
+    }
+  }
+
+  async getAnalysisExams(
+    userId: string,
+    range: 'week' | 'month' | 'all',
+    examCode?: string,
+  ) {
+    const rangeInfo = this.buildRange(range);
+    const period = this.buildRangeInfo(rangeInfo);
+
+    try {
+      let resolvedExamCode = examCode;
+      if (!resolvedExamCode) {
+        const codeParams: any[] = [userId];
+        let codeDateFilter = '';
+        if (rangeInfo.start) {
+          codeParams.push(rangeInfo.start, rangeInfo.endExclusive);
+          codeDateFilter = 'AND exam_date >= $2 AND exam_date < $3';
+        }
+
+        const latestExam = await this.dataSource.query(
+          `
+          SELECT exam_code
+          FROM mock_exams
+          WHERE user_id = $1::uuid
+          ${codeDateFilter}
+          ORDER BY exam_date DESC
+          LIMIT 1
+        `,
+          codeParams,
+        );
+
+        resolvedExamCode = latestExam[0]?.exam_code || null;
+        if (!resolvedExamCode && rangeInfo.start) {
+          const fallback = await this.dataSource.query(
+            `
+            SELECT exam_code
+            FROM mock_exams
+            WHERE user_id = $1::uuid
+            ORDER BY exam_date DESC
+            LIMIT 1
+          `,
+            [userId],
+          );
+          resolvedExamCode = fallback[0]?.exam_code || null;
+        }
+      }
+
+      if (!resolvedExamCode) {
+        return {
+          period,
+          examCode: null,
+          averageNet: 0,
+          targetNet: 0,
+          remainingNet: 0,
+          progressPercent: 0,
+          trend: [],
+          simulation: {
+            estimatedRank: null,
+            isEstimate: true,
+            note: 'Henüz deneme verisi yok.',
+          },
+          subjectDetails: [],
+        };
+      }
+
+      const examParams: any[] = [userId, resolvedExamCode];
+      let examDateFilter = '';
+      if (rangeInfo.start) {
+        examParams.push(rangeInfo.start, rangeInfo.endExclusive);
+        examDateFilter = 'AND exam_date >= $3 AND exam_date < $4';
+      }
+
+      const [averageRes, targetRes, trendRes] = await Promise.all([
+        this.dataSource.query(
+          `
+          SELECT COALESCE(AVG(total_net), 0) AS average_net
+          FROM mock_exams
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+            ${examDateFilter}
+        `,
+          examParams,
+        ),
+        this.dataSource.query(
+          `
+          SELECT target_net
+          FROM exam_target_goals
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+          LIMIT 1
+        `,
+          [userId, resolvedExamCode],
+        ),
+        this.dataSource.query(
+          `
+          SELECT
+            date_trunc('month', exam_date)::date AS period,
+            COALESCE(AVG(total_net), 0) AS average_net
+          FROM mock_exams
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+            ${examDateFilter}
+          GROUP BY period
+          ORDER BY period
+        `,
+          examParams,
+        ),
+      ]);
+
+      const averageNet = Number(averageRes[0]?.average_net || 0);
+      const targetNet = Number(targetRes[0]?.target_net || 0);
+      const remainingNet = targetNet > 0 ? Number((targetNet - averageNet).toFixed(2)) : 0;
+      const progressPercent =
+        targetNet > 0 ? Number(((averageNet / targetNet) * 100).toFixed(2)) : 0;
+
+      const trend = (trendRes || []).map((row) => ({
+        period: this.formatDateYmd(row.period),
+        averageNet: Number(Number(row.average_net || 0).toFixed(2)),
+      }));
+
+      const simulationScore = averageNet > 0 ? Math.max(1000, Math.round(100000 - averageNet * 800)) : null;
+
+      const subjectRes = await this.dataSource.query(
+        `
+        SELECT
+          s.id AS "subjectId",
+          s.name AS "subjectName",
+          COALESCE(AVG(r.net), 0) AS "averageNet"
+        FROM mock_exam_subject_results r
+        INNER JOIN mock_exams me ON r.mock_exam_id = me.id
+        INNER JOIN subjects s ON r.subject_id = s.id
+        WHERE me.user_id = $1::uuid
+          AND me.exam_code = $2
+          ${examDateFilter.replace('exam_date', 'me.exam_date')}
+        GROUP BY s.id, s.name
+        ORDER BY "averageNet" DESC
+      `,
+        examParams,
+      );
+
+      const previousSubjectMap = new Map<string, number>();
+      if (rangeInfo.previousStart) {
+        const previousRes = await this.dataSource.query(
+          `
+          SELECT
+            r.subject_id AS "subjectId",
+            COALESCE(AVG(r.net), 0) AS "averageNet"
+          FROM mock_exam_subject_results r
+          INNER JOIN mock_exams me ON r.mock_exam_id = me.id
+          WHERE me.user_id = $1::uuid
+            AND me.exam_code = $2
+            AND me.exam_date >= $3
+            AND me.exam_date < $4
+          GROUP BY r.subject_id
+        `,
+          [userId, resolvedExamCode, rangeInfo.previousStart, rangeInfo.previousEndExclusive],
+        );
+
+        previousRes.forEach((row) => {
+          previousSubjectMap.set(row.subjectId, Number(row.averageNet || 0));
+        });
+      }
+
+      const recentNetRes = await this.dataSource.query(
+        `
+        WITH ranked AS (
+          SELECT
+            r.subject_id AS "subjectId",
+            s.name AS "subjectName",
+            r.net AS net,
+            me.exam_date AS "examDate",
+            ROW_NUMBER() OVER (
+              PARTITION BY r.subject_id
+              ORDER BY me.exam_date DESC
+            ) AS rn
+          FROM mock_exam_subject_results r
+          INNER JOIN mock_exams me ON r.mock_exam_id = me.id
+          INNER JOIN subjects s ON r.subject_id = s.id
+          WHERE me.user_id = $1::uuid
+            AND me.exam_code = $2
+            ${examDateFilter.replace('exam_date', 'me.exam_date')}
+        )
+        SELECT
+          "subjectId",
+          "subjectName",
+          ARRAY_AGG(net ORDER BY "examDate") AS "recentNets"
+        FROM ranked
+        WHERE rn <= 6
+        GROUP BY "subjectId", "subjectName"
+      `,
+        examParams,
+      );
+
+      const recentNetMap = new Map<string, number[]>();
+      (recentNetRes || []).forEach((row) => {
+        recentNetMap.set(
+          row.subjectId,
+          (row.recentNets || []).map((value: string) => Number(value)),
+        );
+      });
+
+      const subjectDetails = (subjectRes || []).map((row) => {
+        const averageNetValue = Number(row.averageNet || 0);
+        const previousAverage = previousSubjectMap.get(row.subjectId) ?? 0;
+
+        return {
+          subjectId: row.subjectId,
+          subjectName: row.subjectName,
+          averageNet: Number(averageNetValue.toFixed(2)),
+          previousAverageNet: Number(previousAverage.toFixed(2)),
+          delta: Number((averageNetValue - previousAverage).toFixed(2)),
+          recentNets: recentNetMap.get(row.subjectId) ?? [],
+        };
+      });
+
+      return {
+        period,
+        examCode: resolvedExamCode,
+        averageNet: Number(averageNet.toFixed(2)),
+        targetNet,
+        remainingNet,
+        progressPercent,
+        trend,
+        simulation: {
+          estimatedRank: simulationScore,
+          isEstimate: true,
+          note: simulationScore
+            ? 'Geçmiş deneme performansına göre tahmini.'
+            : 'Henüz deneme verisi yok.',
+        },
+        subjectDetails,
+      };
+    } catch (error) {
+      return {
+        period,
+        examCode: examCode ?? null,
+        averageNet: 0,
+        targetNet: 0,
+        remainingNet: 0,
+        progressPercent: 0,
+        trend: [],
+        simulation: {
+          estimatedRank: null,
+          isEstimate: true,
+          note: 'Henüz deneme verisi yok.',
+        },
+        subjectDetails: [],
+      };
     }
   }
 }
