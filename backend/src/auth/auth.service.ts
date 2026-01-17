@@ -2,7 +2,6 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -13,6 +12,10 @@ import { User } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { Repository } from 'typeorm';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import * as crypto from 'crypto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -21,13 +24,10 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
+    private mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
-    if (registerDto.password !== registerDto.passwordConfirm) {
-      throw new BadRequestException('Passwords do not match.');
-    }
-
     const existingUser = await this.usersService.findOneByEmail(
       registerDto.email,
     );
@@ -42,7 +42,6 @@ export class AuthService {
       password: hashedPassword,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
-      examTarget: registerDto.examTarget,
       provider: 'email',
     });
 
@@ -73,6 +72,56 @@ export class AuthService {
       user: this._toUserDto(user),
       ...tokens,
     };
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.usersService.findOneByEmail(
+      forgotPasswordDto.email,
+    );
+
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = resetExpires;
+      await this.usersService.save(user);
+
+      try {
+        await this.mailService.sendPasswordReset(user.email, resetToken);
+      } catch (error) {
+        console.warn('Password reset email send failed:', error);
+      }
+
+      if (process.env.NODE_ENV !== 'production') {
+        return {
+          message: 'If the email exists, a reset link has been sent.',
+          data: {
+            resetToken,
+            deepLink: `sorio://reset-password?token=${resetToken}`,
+          },
+        };
+      }
+    }
+
+    return { message: 'If the email exists, a reset link has been sent.' };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const user = await this.usersService.findOneByResetToken(
+      resetPasswordDto.token,
+    );
+
+    if (!user || !user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      throw new UnauthorizedException('Reset token is invalid or expired.');
+    }
+
+    user.password = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await this.usersService.save(user);
+
+    return { message: 'Password has been reset successfully.' };
   }
 
   async refresh(user: User, refreshToken: string) {

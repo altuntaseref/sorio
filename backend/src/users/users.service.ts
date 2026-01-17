@@ -1,7 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +31,71 @@ export class UsersService {
       .where('user.email = :email', { email })
       .addSelect('user.password')
       .getOne();
+  }
+
+  async findOneByIdWithPassword(id: string): Promise<User | null> {
+    return this.usersRepository.createQueryBuilder('user')
+      .where('user.id = :id', { id })
+      .addSelect('user.password')
+      .getOne();
+  }
+
+  async findOneByResetToken(token: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
+  }
+
+  async save(user: User): Promise<User> {
+    return this.usersRepository.save(user);
+  }
+
+  async updateUser(userId: string, updateDto: UpdateUserDto): Promise<User> {
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (typeof updateDto.firstName !== 'undefined') {
+      user.firstName = updateDto.firstName;
+    }
+
+    if (typeof updateDto.lastName !== 'undefined') {
+      user.lastName = updateDto.lastName;
+    }
+
+    if (typeof updateDto.avatarUrl !== 'undefined') {
+      user.avatarUrl = updateDto.avatarUrl;
+    }
+
+    if (typeof updateDto.examTarget !== 'undefined') {
+      user.examTarget = updateDto.examTarget;
+    }
+
+    return this.usersRepository.save(user);
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.findOneByIdWithPassword(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.password) {
+      throw new BadRequestException('Password change is not available for this account.');
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new BadRequestException('Current password is incorrect.');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('New password must be different.');
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await this.usersRepository.save(user);
   }
 
   async deleteUserAccount(userId: string): Promise<void> {

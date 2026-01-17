@@ -20,12 +20,20 @@ import { AssetsModule } from './assets/assets.module';
 import { StudySessionsModule } from './study-sessions/study-sessions.module';
 import { ExamsModule } from './exams/exams.module';
 import { MockExamsModule } from './mock-exams/mock-exams.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 3,
+      },
+    ]),
     ScheduleModule.forRoot(),
     DatabaseModule,
     UsersModule,
@@ -46,6 +54,12 @@ import { MockExamsModule } from './mock-exams/mock-exams.module';
     MockExamsModule,
   ],
   controllers: [AppController],
-  providers: [LoggerService],
+  providers: [
+    LoggerService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

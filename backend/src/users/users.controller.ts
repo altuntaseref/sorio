@@ -1,8 +1,10 @@
-import { Controller, Delete, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from './entities/user.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
 export class UsersController {
@@ -13,6 +15,40 @@ export class UsersController {
   getProfile(@GetUser() user: User) {
     delete user.password;
     return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  async updateProfile(
+    @GetUser() user: User,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    const updatedUser = await this.usersService.updateUser(
+      user.id,
+      updateUserDto,
+    );
+    delete updatedUser.password;
+    return {
+      success: true,
+      data: updatedUser,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/password')
+  async changePassword(
+    @GetUser() user: User,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(
+      user.id,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    );
+    return {
+      success: true,
+      message: 'Password updated successfully.',
+    };
   }
 
   /**

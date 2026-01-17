@@ -24,6 +24,13 @@ export class User {
   @Exclude()
   password?: string;
 
+  @Column({ name: 'reset_password_token', nullable: true })
+  @Exclude()
+  resetPasswordToken?: string;
+
+  @Column({ name: 'reset_password_expires', type: 'timestamp', nullable: true })
+  resetPasswordExpires?: Date;
+
   @Column({
     name: 'first_name',
   })
