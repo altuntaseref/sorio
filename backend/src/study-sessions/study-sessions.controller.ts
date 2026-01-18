@@ -54,6 +54,7 @@ export class StudySessionsController {
     const sessions = await this.studySessionsService.getSessions(
       userId,
       getSessionsDto.timerType,
+      getSessionsDto.examCode,
     );
     return {
       success: true,

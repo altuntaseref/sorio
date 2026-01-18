@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -54,17 +55,25 @@ export class QuestionsService {
       );
     }
 
-    // Eğer examCode verilmemişse, kullanıcının aktif sınavını kullan
-    let resolvedExamCode = examCode;
-    if (!resolvedExamCode) {
-      const user = await this.usersService.findOne(userId);
-      resolvedExamCode = user?.activeExamCode || null;
+    let resolvedExamCode = await this.usersService.resolveExamCode(
+      userId,
+      examCode,
+    );
+
+    if (subject.examCode) {
+      if (resolvedExamCode && subject.examCode !== resolvedExamCode) {
+        throw new BadRequestException(
+          'Selected subject does not match the requested exam code',
+        );
+      }
+      await this.usersService.ensureExamCodeAllowed(userId, subject.examCode);
+      resolvedExamCode = subject.examCode;
     }
 
     const question = this.questionsRepository.create({
       ...createQuestionDto,
       userId,
-      examCode: resolvedExamCode,
+      examCode: resolvedExamCode ?? undefined,
     });
 
     const savedQuestion = await this.questionsRepository.save(question);
@@ -87,12 +96,10 @@ export class QuestionsService {
     const { page = 1, limit = 20, subjectId, topicId, examCode } = getQuestionsDto;
     const skip = (page - 1) * limit;
 
-    // Eğer examCode verilmemişse, kullanıcının aktif sınavını kullan
-    let resolvedExamCode = examCode;
-    if (!resolvedExamCode) {
-      const user = await this.usersService.findOne(userId);
-      resolvedExamCode = user?.activeExamCode || null;
-    }
+    let resolvedExamCode = await this.usersService.resolveExamCode(
+      userId,
+      examCode,
+    );
 
     const queryBuilder = this.questionsRepository.createQueryBuilder('question');
 
@@ -211,6 +218,7 @@ export class QuestionsService {
       solutionNote: question.solutionNote,
       solutionImageUrl: question.solutionImageUrl,
       aiSolution: question.aiSolution,
+      examCode: question.examCode ?? null,
       subjectId: question.subjectId,
       subjectName: question.subject.name,
       topicId: question.topicId,

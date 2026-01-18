@@ -6,6 +6,7 @@ import {
   IsDateString,
   Min,
   Max,
+  IsString,
 } from 'class-validator';
 
 export class LogStudySessionDto {
@@ -31,4 +32,8 @@ export class LogStudySessionDto {
   @IsIn(['POMODORO', 'FREE_TIMER'])
   @IsOptional()
   timerType?: 'POMODORO' | 'FREE_TIMER'; // Pomodoro mu, serbest timer mı? (default: 'POMODORO')
+
+  @IsOptional()
+  @IsString()
+  examCode?: string; // Hangi sınav için (TYT, AYT_SAY, etc.)
 }

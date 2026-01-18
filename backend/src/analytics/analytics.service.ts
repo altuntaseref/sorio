@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MotivationService } from '../motivation/motivation.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AnalyticsService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly motivationService: MotivationService,
+    private readonly usersService: UsersService,
   ) {}
 
   private normalizeDate(value: Date | string) {
@@ -1085,7 +1087,10 @@ export class AnalyticsService {
     const period = this.buildRangeInfo(rangeInfo);
 
     try {
-      let resolvedExamCode = examCode;
+      let resolvedExamCode = await this.usersService.resolveExamCode(
+        userId,
+        examCode,
+      );
       if (!resolvedExamCode) {
         const codeParams: any[] = [userId];
         let codeDateFilter = '';

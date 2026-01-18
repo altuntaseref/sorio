@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,6 +21,8 @@ export class MockExamsService {
   constructor(
     @InjectRepository(UserExamTarget)
     private readonly userExamTargetRepository: Repository<UserExamTarget>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @InjectRepository(ExamTargetGoal)
     private readonly examTargetGoalRepository: Repository<ExamTargetGoal>,
     @InjectRepository(MockExam)
@@ -39,15 +40,50 @@ export class MockExamsService {
     userId: string,
     dto: SetExamTargetsDto,
   ): Promise<UserExamTarget[]> {
+    if (!dto.examCodes?.length) {
+      throw new BadRequestException('At least one examCode is required');
+    }
+
+    if (dto.examCodes.length > 5) {
+      throw new BadRequestException('A user can have at most 5 exam targets');
+    }
+
+    const uniqueExamCodes = Array.from(new Set(dto.examCodes));
+    const existingExams = await this.examRepository.find({
+      where: { code: In(uniqueExamCodes) },
+    });
+
+    if (existingExams.length !== uniqueExamCodes.length) {
+      const existingCodes = new Set(existingExams.map((exam) => exam.code));
+      const missingCodes = uniqueExamCodes.filter(
+        (code) => !existingCodes.has(code),
+      );
+      throw new BadRequestException(
+        `Invalid exam codes: ${missingCodes.join(', ')}`,
+      );
+    }
+
     // Önce mevcut hedefleri sil
     await this.userExamTargetRepository.delete({ userId });
 
     // Yeni hedefleri ekle
-    const targets = dto.examCodes.map((examCode) =>
+    const targets = uniqueExamCodes.map((examCode) =>
       this.userExamTargetRepository.create({ userId, examCode }),
     );
 
-    return this.userExamTargetRepository.save(targets);
+    const savedTargets = await this.userExamTargetRepository.save(targets);
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.activeExamCode || !uniqueExamCodes.includes(user.activeExamCode)) {
+      user.activeExamCode = uniqueExamCodes[0];
+      await this.userRepository.save(user);
+    }
+
+    return savedTargets;
   }
 
   // Kullanıcının sınav hedeflerini getir
@@ -102,6 +138,16 @@ export class MockExamsService {
     userId: string,
     dto: CreateMockExamDto,
   ): Promise<MockExam> {
+    const userTargets = await this.userExamTargetRepository.find({
+      where: { userId },
+    });
+    const allowedExamCodes = new Set(userTargets.map((target) => target.examCode));
+    if (allowedExamCodes.size > 0 && !allowedExamCodes.has(dto.examCode)) {
+      throw new BadRequestException(
+        `Exam code ${dto.examCode} is not in user's exam list`,
+      );
+    }
+
     // Exam'in var olduğunu kontrol et
     const exam = await this.examRepository.findOne({
       where: { code: dto.examCode },

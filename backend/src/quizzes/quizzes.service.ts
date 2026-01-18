@@ -47,6 +47,9 @@ export class QuizzesService {
       );
     }
 
+    let loadedSubjects: Subject[] = [];
+    let loadedTopics: Topic[] = [];
+
     if (subjectIds?.length) {
       const subjects = await this.subjectRepository.find({
         where: { id: In(subjectIds) },
@@ -63,6 +66,7 @@ export class QuizzesService {
           );
         }
       }
+      loadedSubjects = subjects;
     }
 
     if (topicIds?.length) {
@@ -82,13 +86,39 @@ export class QuizzesService {
           );
         }
       }
+      loadedTopics = topics;
     }
 
-    // Eğer examCode verilmemişse, kullanıcının aktif sınavını kullan
-    let resolvedExamCode = examCode;
-    if (!resolvedExamCode) {
-      const user = await this.usersService.findOne(userId);
-      resolvedExamCode = user?.activeExamCode || null;
+    let resolvedExamCode = await this.usersService.resolveExamCode(
+      userId,
+      examCode,
+    );
+
+    const detectedExamCodes = new Set<string>();
+
+    loadedSubjects
+      .filter((subject) => subject.examCode)
+      .forEach((subject) => detectedExamCodes.add(subject.examCode as string));
+
+    loadedTopics
+      .filter((topic) => topic.subject?.examCode)
+      .forEach((topic) =>
+        detectedExamCodes.add(topic.subject.examCode as string),
+      );
+
+    if (detectedExamCodes.size > 1) {
+      throw new BadRequestException('Quiz cannot span multiple exam codes');
+    }
+
+    if (detectedExamCodes.size === 1) {
+      const detectedExamCode = Array.from(detectedExamCodes)[0];
+      if (resolvedExamCode && resolvedExamCode !== detectedExamCode) {
+        throw new BadRequestException(
+          'Selected subjects/topics do not match the requested exam code',
+        );
+      }
+      await this.usersService.ensureExamCodeAllowed(userId, detectedExamCode);
+      resolvedExamCode = detectedExamCode;
     }
 
     // SRS (Spaced Repetition System) ile soru seçimi
@@ -107,7 +137,7 @@ export class QuizzesService {
     const quizSession = this.quizSessionRepository.create({
       userId,
       mode,
-      examCode: resolvedExamCode,
+      examCode: resolvedExamCode ?? undefined,
       totalQuestions: questions.length,
       correctCount: 0,
       incorrectCount: 0,

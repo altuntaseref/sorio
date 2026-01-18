@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { StudySession } from './entities/study-session.entity';
 import { LogStudySessionDto } from './dto/log-study-session.dto';
 import { Subject } from '../subjects/entities/subject.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class StudySessionsService {
@@ -17,6 +18,7 @@ export class StudySessionsService {
     private studySessionRepository: Repository<StudySession>,
     @InjectRepository(Subject)
     private subjectRepository: Repository<Subject>,
+    private usersService: UsersService,
   ) {}
 
   /**
@@ -26,6 +28,12 @@ export class StudySessionsService {
     userId: string,
     logSessionDto: LogStudySessionDto,
   ): Promise<StudySession> {
+    const { subjectId, examCode } = logSessionDto;
+    let resolvedExamCode = await this.usersService.resolveExamCode(
+      userId,
+      examCode,
+    );
+
     // Subject ID kontrolü (eğer verilmişse)
     if (logSessionDto.subjectId) {
       const subject = await this.subjectRepository.findOne({
@@ -41,6 +49,16 @@ export class StudySessionsService {
         throw new ForbiddenException(
           'You do not have access to this subject',
         );
+      }
+
+      if (subject.examCode) {
+        if (resolvedExamCode && subject.examCode !== resolvedExamCode) {
+          throw new BadRequestException(
+            'Selected subject does not match the requested exam code',
+          );
+        }
+        await this.usersService.ensureExamCodeAllowed(userId, subject.examCode);
+        resolvedExamCode = subject.examCode;
       }
     }
 
@@ -73,7 +91,8 @@ export class StudySessionsService {
 
     const studySession = this.studySessionRepository.create({
       userId,
-      subjectId: logSessionDto.subjectId,
+      subjectId,
+      examCode: resolvedExamCode ?? undefined,
       duration: logSessionDto.duration,
       startedAt,
       endedAt,
@@ -92,10 +111,18 @@ export class StudySessionsService {
   async getSessions(
     userId: string,
     timerType?: 'POMODORO' | 'FREE_TIMER',
+    examCode?: string,
   ): Promise<StudySession[]> {
     const where: any = { userId };
     if (timerType) {
       where.timerType = timerType;
+    }
+    if (examCode) {
+      const resolvedExamCode = await this.usersService.resolveExamCode(
+        userId,
+        examCode,
+      );
+      where.examCode = resolvedExamCode ?? null;
     }
 
     return this.studySessionRepository.find({

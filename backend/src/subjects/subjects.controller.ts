@@ -8,6 +8,7 @@ import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto'; // Import UpdateSubjectDto
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { TopicsService } from '../topics/topics.service';
+import { UsersService } from '../users/users.service';
 
 @Controller('subjects')
 @UseGuards(JwtAuthGuard)
@@ -15,6 +16,7 @@ export class SubjectsController {
   constructor(
     private readonly subjectsService: SubjectsService,
     private readonly topicsService: TopicsService,
+    private readonly usersService: UsersService,
     ) {}
 
   @Post()
@@ -85,8 +87,17 @@ export class SubjectsController {
   }
 
   @Get()
-  async findAllForUser(@GetUser() user: User) {
-    const { systemSubjects, customSubjects } = await this.subjectsService.findAllForUser(user);
+  async findAllForUser(
+    @GetUser() user: User,
+    @Query('examCode') examCode?: string,
+    @Query('examTarget') examTarget?: string,
+  ) {
+    const resolvedExamCode = await this.usersService.resolveExamCode(
+      user.id,
+      examCode ?? examTarget,
+    );
+    const { systemSubjects, customSubjects } =
+      await this.subjectsService.findAllForUser(user, resolvedExamCode);
 
     return {
       success: true,
@@ -100,15 +111,20 @@ export class SubjectsController {
   @Get('default')
   async findDefaultSubjects(
     @GetUser() user: User,
+    @Query('examCode') examCode?: string,
     @Query('examTarget') examTarget?: string,
   ) {
-    const target = examTarget || user.examTarget;
+    const resolvedExamCode = await this.usersService.resolveExamCode(
+      user.id,
+      examCode ?? examTarget,
+    );
 
-    if (!target) {
+    if (!resolvedExamCode) {
       return { subjects: [] };
     }
 
-    const subjects = await this.subjectsService.findDefaultByExamTarget(target);
+    const subjects =
+      await this.subjectsService.findDefaultByExamCode(resolvedExamCode);
     return { subjects };
   }
 

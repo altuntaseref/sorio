@@ -54,14 +54,19 @@ export class SubjectsService {
     return subject;
   }
 
-  async findAllForUser(user: User): Promise<{ systemSubjects: Subject[]; customSubjects: Subject[] }> {
-    const { id: userId, examTarget: userExamTarget } = user;
+  async findAllForUser(
+    user: User,
+    examCode: string | null,
+  ): Promise<{ systemSubjects: Subject[]; customSubjects: Subject[] }> {
+    const { id: userId } = user;
 
-    const systemSubjects = await this.subjectRepository.find({
-      where: { isSystem: true, examTarget: userExamTarget },
-      relations: ['topics'],
-      order: { name: 'ASC', topics: { createdAt: 'ASC' } },
-    });
+    const systemSubjects = examCode
+      ? await this.subjectRepository.find({
+          where: { isSystem: true, examCode },
+          relations: ['topics'],
+          order: { name: 'ASC', topics: { createdAt: 'ASC' } },
+        })
+      : [];
 
     const customSubjects = await this.subjectRepository.find({
       where: { user: { id: userId }, isSystem: false },
@@ -72,11 +77,11 @@ export class SubjectsService {
     return { systemSubjects, customSubjects };
   }
 
-  async findDefaultByExamTarget(examTarget: string): Promise<Subject[]> {
+  async findDefaultByExamCode(examCode: string): Promise<Subject[]> {
     return this.subjectRepository.find({
       where: {
         isSystem: true,
-        examTarget: examTarget,
+        examCode,
       },
       relations: ['topics'],
       order: {

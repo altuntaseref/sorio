@@ -14,6 +14,7 @@ export class DashboardService {
   ) {}
 
   async getDashboard(userId: string) {
+    const resolvedExamCode = await this.usersService.resolveExamCode(userId);
     // Tüm veri kaynaklarını paralel çek
     const [
       overview,
@@ -26,15 +27,15 @@ export class DashboardService {
       examSuccess,
       examCountdown,
     ] = await Promise.all([
-      this.getOverview(userId),
-      this.getSubjects(userId),
-      this.getRecentQuestions(userId),
-      this.getWeeklyActivity(userId),
+      this.getOverview(userId, resolvedExamCode),
+      this.getSubjects(userId, resolvedExamCode),
+      this.getRecentQuestions(userId, resolvedExamCode),
+      this.getWeeklyActivity(userId, resolvedExamCode),
       this.getMotivation(userId),
-      this.getQuickStats(userId),
-      this.getFocusAnalysis(userId),
-      this.getExamSuccess(userId),
-      this.getExamCountdown(userId),
+      this.getQuickStats(userId, resolvedExamCode),
+      this.getFocusAnalysis(userId, resolvedExamCode),
+      this.getExamSuccess(userId, resolvedExamCode),
+      this.getExamCountdown(userId, resolvedExamCode),
     ]);
 
     return {
@@ -53,7 +54,7 @@ export class DashboardService {
   /**
    * 7. ODAKLANMA ANALİZİ (Toplam süre, haftalık değişim, en verimli saat, dağılım)
    */
-  private async getFocusAnalysis(userId: string) {
+  private async getFocusAnalysis(userId: string, examCode: string | null) {
     try {
       // Toplam odaklanma (dakika)
       const totalRes = await this.dataSource.query(
@@ -61,10 +62,11 @@ export class DashboardService {
         SELECT
           COALESCE(SUM(duration), 0)::int AS total_minutes
         FROM study_sessions
-        WHERE user_id = $1::uuid
+        WHERE study_sessions.user_id = $1::uuid
           AND status = 'COMPLETED'
+          AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)
         `,
-        [userId],
+        [userId, examCode],
       );
 
       // Bu hafta ve geçen hafta odaklanma (dakika)
@@ -76,6 +78,7 @@ export class DashboardService {
           WHERE user_id = $1::uuid
             AND status = 'COMPLETED'
             AND started_at >= CURRENT_DATE - INTERVAL '6 days'
+            AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)
         ),
         last_week AS (
           SELECT COALESCE(SUM(duration), 0)::int AS minutes
@@ -84,12 +87,13 @@ export class DashboardService {
             AND status = 'COMPLETED'
             AND started_at >= CURRENT_DATE - INTERVAL '13 days'
             AND started_at <  CURRENT_DATE - INTERVAL '6 days'
+            AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)
         )
         SELECT this_week.minutes  AS this_week,
                last_week.minutes  AS last_week
         FROM this_week, last_week
         `,
-        [userId],
+        [userId, examCode],
       );
 
       const totalMinutes = Number(totalRes[0]?.total_minutes || 0);
@@ -108,11 +112,12 @@ export class DashboardService {
         WHERE user_id = $1::uuid
           AND status = 'COMPLETED'
           AND started_at >= CURRENT_DATE - INTERVAL '30 days'
+          AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)
         GROUP BY hour
         ORDER BY total_minutes DESC
         LIMIT 1
         `,
-        [userId],
+        [userId, examCode],
       );
 
       const productiveHour = productiveRes[0]
@@ -132,9 +137,10 @@ export class DashboardService {
         WHERE user_id = $1::uuid
           AND status = 'COMPLETED'
           AND started_at >= CURRENT_DATE - INTERVAL '30 days'
+          AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)
         GROUP BY timer_type
         `,
-        [userId],
+        [userId, examCode],
       );
 
       const distribution = distRes.map((r) => ({
@@ -162,7 +168,7 @@ export class DashboardService {
   /**
    * 8. SINAV BAŞARISI (Deneme sınavları ve hedef net)
    */
-  private async getExamSuccess(userId: string) {
+  private async getExamSuccess(userId: string, examCode: string | null) {
     try {
       // Son deneme ve önceki deneme (aynı exam_code)
       const lastRes = await this.dataSource.query(
@@ -170,19 +176,20 @@ export class DashboardService {
         SELECT id, exam_code, exam_name, exam_date, total_net
         FROM mock_exams
         WHERE user_id = $1::uuid
+          AND ($2::varchar IS NULL OR exam_code = $2)
         ORDER BY exam_date DESC
         LIMIT 2
         `,
-        [userId],
+        [userId, examCode],
       );
 
       const lastExam = lastRes[0] || null;
       const prevExam = lastRes[1] || null;
-      const examCode = lastExam?.exam_code || null;
+      const resolvedExamCode = examCode ?? (lastExam?.exam_code || null);
 
       // Hedef net
       let targetNet = 0;
-      if (examCode) {
+      if (resolvedExamCode) {
         const goalRes = await this.dataSource.query(
           `
           SELECT target_net
@@ -191,7 +198,7 @@ export class DashboardService {
             AND exam_code = $2
           LIMIT 1
           `,
-          [userId, examCode],
+          [userId, resolvedExamCode],
         );
         targetNet = Number(goalRes[0]?.target_net || 0);
       }
@@ -203,7 +210,7 @@ export class DashboardService {
       const remainingNet = targetNet > 0 ? Number((targetNet - currentNet).toFixed(2)) : 0;
 
       return {
-        examCode,
+        examCode: resolvedExamCode,
         currentNet,
         previousNet,
         delta, // Net Ort. artışı/azalışı
@@ -233,39 +240,44 @@ export class DashboardService {
   }
 
   // 1. GENEL İSTATİSTİKLER
-  private async getOverview(userId: string) {
+  private async getOverview(userId: string, examCode: string | null) {
     try {
       const result = await this.dataSource.query(
         `
         SELECT 
           -- 1. Eklenen toplam soru
-          (SELECT COUNT(*)::int FROM questions WHERE user_id = $1::uuid) as "totalQuestionsAdded",
+          (SELECT COUNT(*)::int FROM questions WHERE user_id = $1::uuid
+            AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)) as "totalQuestionsAdded",
           
           -- 2. Quiz'de çözülen toplam soru sayısı (unique)
           (SELECT COUNT(DISTINCT qa.question_id)::int 
            FROM quiz_answers qa
            INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-           WHERE qs.user_id = $1::uuid) as "totalQuestionsSolved",
+           WHERE qs.user_id = $1::uuid
+             AND ($2::varchar IS NULL OR qs.exam_code = $2 OR qs.exam_code IS NULL)) as "totalQuestionsSolved",
           
           -- 3. Toplam doğru cevaplar
           (SELECT COUNT(*)::int 
            FROM quiz_answers qa
            INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-           WHERE qs.user_id = $1::uuid AND qa.is_correct = true) as "totalCorrect",
+           WHERE qs.user_id = $1::uuid AND qa.is_correct = true
+             AND ($2::varchar IS NULL OR qs.exam_code = $2 OR qs.exam_code IS NULL)) as "totalCorrect",
            
           -- 4. Toplam yanlış cevaplar
           (SELECT COUNT(*)::int 
            FROM quiz_answers qa
            INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
-           WHERE qs.user_id = $1::uuid AND qa.is_correct = false) as "totalIncorrect",
+           WHERE qs.user_id = $1::uuid AND qa.is_correct = false
+             AND ($2::varchar IS NULL OR qs.exam_code = $2 OR qs.exam_code IS NULL)) as "totalIncorrect",
           
           -- 5. Bu hafta eklenen sorular
           (SELECT COUNT(*)::int 
            FROM questions 
            WHERE user_id = $1::uuid 
-           AND created_at >= CURRENT_DATE - INTERVAL '7 days') as "weeklyQuestionsAdded"
+           AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+           AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)) as "weeklyQuestionsAdded"
       `,
-        [userId],
+        [userId, examCode],
       );
 
       const totalCorrect = Number(result[0]?.totalCorrect || 0);
@@ -331,7 +343,7 @@ export class DashboardService {
   }
 
   // 2. DERS BAZLI DETAYLAR
-  private async getSubjects(userId: string) {
+  private async getSubjects(userId: string, examCode: string | null) {
     try {
       const colors = [
         '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
@@ -364,13 +376,15 @@ export class DashboardService {
           
         FROM subjects s
         INNER JOIN questions q ON s.id = q.subject_id AND q.user_id = $1::uuid
+          AND ($2::varchar IS NULL OR q.exam_code = $2 OR q.exam_code IS NULL)
         LEFT JOIN quiz_answers qa ON q.id = qa.question_id
         LEFT JOIN quiz_sessions qsess ON qa.quiz_session_id = qsess.id AND qsess.user_id = $1::uuid
+          AND ($2::varchar IS NULL OR qsess.exam_code = $2 OR qsess.exam_code IS NULL)
         LEFT JOIN question_statistics qs ON q.id = qs.question_id AND qs.user_id = $1::uuid
         GROUP BY s.id, s.name
         ORDER BY "totalQuestions" DESC
       `,
-        [userId],
+        [userId, examCode],
       );
 
       return result.map((row, index) => {
@@ -400,7 +414,7 @@ export class DashboardService {
   }
 
   // 3. SON EKLENEN SORULAR
-  private async getRecentQuestions(userId: string) {
+  private async getRecentQuestions(userId: string, examCode: string | null) {
     try {
       const result = await this.dataSource.query(
         `
@@ -423,10 +437,11 @@ export class DashboardService {
         LEFT JOIN topics t ON q.topic_id = t.id
         LEFT JOIN question_statistics qs ON q.id = qs.question_id AND qs.user_id = q.user_id
         WHERE q.user_id = $1::uuid
+          AND ($2::varchar IS NULL OR q.exam_code = $2 OR q.exam_code IS NULL)
         ORDER BY q.created_at DESC
         LIMIT 10
       `,
-        [userId],
+        [userId, examCode],
       );
 
       return result.map((row) => ({
@@ -449,7 +464,7 @@ export class DashboardService {
   }
 
   // 4. HAFTALIK AKTİVİTE
-  private async getWeeklyActivity(userId: string) {
+  private async getWeeklyActivity(userId: string, examCode: string | null) {
     try {
       const result = await this.dataSource.query(
         `
@@ -467,6 +482,7 @@ export class DashboardService {
           FROM questions
           WHERE user_id = $1::uuid
           AND created_at >= CURRENT_DATE - INTERVAL '6 days'
+          AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)
           GROUP BY DATE(created_at)
         ),
         questions_solved AS (
@@ -477,6 +493,7 @@ export class DashboardService {
           INNER JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id
           WHERE qs.user_id = $1::uuid
           AND qa.answered_at >= CURRENT_DATE - INTERVAL '6 days'
+          AND ($2::varchar IS NULL OR qs.exam_code = $2 OR qs.exam_code IS NULL)
           GROUP BY DATE(qa.answered_at)
         )
         SELECT 
@@ -488,7 +505,7 @@ export class DashboardService {
         LEFT JOIN questions_solved qs ON ld.date = qs.date
         ORDER BY ld.date
       `,
-        [userId],
+        [userId, examCode],
       );
 
       return result.map((row) => ({
@@ -517,20 +534,22 @@ export class DashboardService {
   }
 
   // 6. HIZLI ERİŞİM BİLGİLERİ
-  private async getQuickStats(userId: string) {
+  private async getQuickStats(userId: string, examCode: string | null) {
     try {
       // Pending reviews: next_review_at <= NOW() veya mastery_level < 2 olan sorular
       const pendingResult = await this.dataSource.query(
         `
         SELECT COUNT(DISTINCT question_id)::int as count
         FROM question_statistics
-        WHERE user_id = $1::uuid
+        INNER JOIN questions q ON question_statistics.question_id = q.id
+        WHERE question_statistics.user_id = $1::uuid
+        AND ($2::varchar IS NULL OR q.exam_code = $2 OR q.exam_code IS NULL)
         AND (
           (next_review_at IS NULL OR next_review_at <= NOW())
           OR mastery_level < 2
         )
       `,
-        [userId],
+        [userId, examCode],
       );
 
       // Zayıf dersler: Başarı oranı %50'nin altında olanlar
@@ -542,19 +561,22 @@ export class DashboardService {
         LEFT JOIN quiz_answers qa ON q.id = qa.question_id
         LEFT JOIN quiz_sessions qs ON qa.quiz_session_id = qs.id AND qs.user_id = $1::uuid
         WHERE q.user_id = $1::uuid
+        AND ($2::varchar IS NULL OR q.exam_code = $2 OR q.exam_code IS NULL)
+        AND ($2::varchar IS NULL OR qs.exam_code = $2 OR qs.exam_code IS NULL)
         GROUP BY s.id, s.name
         HAVING 
           COUNT(qa.id) > 5
           AND (SUM(CASE WHEN qa.is_correct THEN 1 ELSE 0 END)::numeric / NULLIF(COUNT(qa.id), 0)) < 0.5
         LIMIT 3
       `,
-        [userId],
+        [userId, examCode],
       );
 
       // Sonraki hedef hesapla
       const totalQuestions = await this.dataSource.query(
-        `SELECT COUNT(*)::int as count FROM questions WHERE user_id = $1::uuid`,
-        [userId],
+        `SELECT COUNT(*)::int as count FROM questions WHERE user_id = $1::uuid
+          AND ($2::varchar IS NULL OR exam_code = $2 OR exam_code IS NULL)`,
+        [userId, examCode],
       );
       const count = Number(totalQuestions[0]?.count || 0);
       let nextGoal = '10 soru ekle';
@@ -582,11 +604,9 @@ export class DashboardService {
   /**
    * 9. SINAVA KALAN GÜN SAYISI
    */
-  private async getExamCountdown(userId: string) {
+  private async getExamCountdown(userId: string, examCode: string | null) {
     try {
-      // Kullanıcının examTarget'ını al
-      const user = await this.usersService.findOne(userId);
-      if (!user || !user.examTarget) {
+      if (!examCode) {
         return {
           daysRemaining: null,
           examDate: null,
@@ -596,13 +616,13 @@ export class DashboardService {
       }
 
       // Sınav bilgisini al
-      const exam = await this.examsService.findOneByCode(user.examTarget);
+      const exam = await this.examsService.findOneByCode(examCode);
       if (!exam || !exam.examDate) {
         return {
           daysRemaining: null,
           examDate: null,
           examName: exam?.name || null,
-          examCode: user.examTarget,
+          examCode,
         };
       }
 

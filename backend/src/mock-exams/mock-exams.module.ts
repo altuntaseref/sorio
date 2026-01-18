@@ -8,6 +8,7 @@ import { MockExam } from './entities/mock-exam.entity';
 import { MockExamSubjectResult } from './entities/mock-exam-subject-result.entity';
 import { Subject } from '../subjects/entities/subject.entity';
 import { Exam } from '../exams/entities/exam.entity';
+import { User } from '../users/entities/user.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Exam } from '../exams/entities/exam.entity';
       MockExamSubjectResult,
       Subject,
       Exam,
+      User,
     ]),
   ],
   controllers: [MockExamsController],

@@ -1,4 +1,4 @@
-import { IsIn, IsArray, IsOptional, IsUUID } from 'class-validator';
+import { IsIn, IsArray, IsOptional, IsUUID, IsString } from 'class-validator';
 
 export class StartQuizDto {
   @IsIn(['learning', 'wrong-answers'])
