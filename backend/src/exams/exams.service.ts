@@ -35,4 +35,18 @@ export class ExamsService {
       order: { sections: { orderIndex: 'ASC' } },
     });
   }
+
+  async updateExam(code: string, examDate?: Date): Promise<Exam | null> {
+    const exam = await this.findOneByCode(code);
+    if (!exam) {
+      return null;
+    }
+
+    if (examDate !== undefined) {
+      exam.examDate = examDate;
+      await this.examRepository.save(exam);
+    }
+
+    return exam;
+  }
 }

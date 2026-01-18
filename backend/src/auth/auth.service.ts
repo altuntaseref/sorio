@@ -50,6 +50,7 @@ export class AuthService {
     return {
       user: this._toUserDto(newUser),
       ...tokens,
+      requiresExamSelection: !newUser.examTarget,
     };
   }
 
@@ -71,6 +72,7 @@ export class AuthService {
     return {
       user: this._toUserDto(user),
       ...tokens,
+      requiresExamSelection: !user.examTarget,
     };
   }
 

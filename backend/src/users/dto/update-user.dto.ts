@@ -16,5 +16,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   examTarget?: string;
+
+  @IsOptional()
+  @IsString()
+  activeExamCode?: string; // Aktif sınav kodu (TYT, AYT_SAY, etc.)
 }
 

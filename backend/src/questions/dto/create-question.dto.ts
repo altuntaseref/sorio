@@ -55,4 +55,8 @@ export class CreateQuestionDto {
   @IsOptional()
   @IsString()
   aiSolution?: string;
+
+  @IsOptional()
+  @IsString()
+  examCode?: string; // Hangi sınav için bu soru (TYT, AYT_SAY, etc.)
 }

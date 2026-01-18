@@ -20,6 +20,9 @@ export class QuizSession {
   @Column({ name: 'user_id' })
   userId: string;
 
+  @Column({ name: 'exam_code', type: 'varchar', length: 50, nullable: true })
+  examCode?: string; // Hangi sınav için bu quiz (TYT, AYT_SAY, etc.)
+
   @Column({ type: 'varchar', length: 20 })
   mode: 'learning' | 'wrong-answers';
 

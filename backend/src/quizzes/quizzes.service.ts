@@ -15,6 +15,7 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { QuizAnswer } from './entities/quiz-answer.entity';
 import { DailyStatistic } from '../statistics/entities/daily-statistic.entity';
 import { QuestionStatistic } from '../statistics/entities/question-statistic.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class QuizzesService {
@@ -34,10 +35,11 @@ export class QuizzesService {
     @InjectRepository(QuestionStatistic)
     private questionStatisticRepository: Repository<QuestionStatistic>,
     private dataSource: DataSource,
+    private usersService: UsersService,
   ) {}
 
   async startQuiz(userId: string, startQuizDto: StartQuizDto) {
-    const { mode, subjectIds, topicIds } = startQuizDto;
+    const { mode, subjectIds, topicIds, examCode } = startQuizDto;
 
     if (!subjectIds?.length && !topicIds?.length) {
       throw new BadRequestException(
@@ -82,12 +84,20 @@ export class QuizzesService {
       }
     }
 
+    // Eğer examCode verilmemişse, kullanıcının aktif sınavını kullan
+    let resolvedExamCode = examCode;
+    if (!resolvedExamCode) {
+      const user = await this.usersService.findOne(userId);
+      resolvedExamCode = user?.activeExamCode || null;
+    }
+
     // SRS (Spaced Repetition System) ile soru seçimi
     const questions = await this.selectQuestionsWithSRS(
       userId,
       mode,
       subjectIds,
       topicIds,
+      resolvedExamCode,
     );
 
     if (questions.length === 0) {
@@ -97,6 +107,7 @@ export class QuizzesService {
     const quizSession = this.quizSessionRepository.create({
       userId,
       mode,
+      examCode: resolvedExamCode,
       totalQuestions: questions.length,
       correctCount: 0,
       incorrectCount: 0,
@@ -187,6 +198,7 @@ export class QuizzesService {
     mode: 'learning' | 'wrong-answers',
     subjectIds?: string[],
     topicIds?: string[],
+    examCode?: string | null,
   ): Promise<Question[]> {
     const now = new Date();
     const selectedQuestions: Question[] = [];
@@ -224,6 +236,12 @@ export class QuizzesService {
     if (topicIds?.length) {
       urgentQuery += ` AND q.topic_id = ANY($${urgentParams.length + 1}::uuid[])`;
       urgentParams.push(topicIds);
+    }
+
+    // exam_code ile filtreleme (null olabilir - eski sorular için)
+    if (examCode !== null && examCode !== undefined) {
+      urgentQuery += ` AND (q.exam_code = $${urgentParams.length + 1} OR q.exam_code IS NULL)`;
+      urgentParams.push(examCode);
     }
     
     urgentQuery += `
@@ -282,6 +300,13 @@ export class QuizzesService {
       if (topicIds?.length) {
         weakQuery += ` AND q.topic_id = ANY($${paramIndex}::uuid[])`;
         weakParams.push(topicIds);
+        paramIndex++;
+      }
+
+      // exam_code ile filtreleme (null olabilir - eski sorular için)
+      if (examCode !== null && examCode !== undefined) {
+        weakQuery += ` AND (q.exam_code = $${paramIndex} OR q.exam_code IS NULL)`;
+        weakParams.push(examCode);
         paramIndex++;
       }
       

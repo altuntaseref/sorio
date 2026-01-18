@@ -51,7 +51,15 @@ export class User {
     name: 'exam_target',
     nullable: true,
   })
-  examTarget?: string;
+  examTarget?: string; // Deprecated: Artık user_exam_targets kullanılacak
+
+  @Column({
+    name: 'active_exam_code',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  activeExamCode?: string; // Şu anda aktif olan sınav (TYT, AYT_SAY, etc.)
 
   @Column({ default: 'email' })
   provider: string;

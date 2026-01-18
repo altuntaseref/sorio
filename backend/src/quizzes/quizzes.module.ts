@@ -9,6 +9,7 @@ import { Topic } from '../topics/entities/topic.entity';
 import { QuizAnswer } from './entities/quiz-answer.entity';
 import { DailyStatistic } from '../statistics/entities/daily-statistic.entity';
 import { QuestionStatistic } from '../statistics/entities/question-statistic.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { QuestionStatistic } from '../statistics/entities/question-statistic.ent
       DailyStatistic,
       QuestionStatistic,
     ]),
+    UsersModule,
   ],
   controllers: [QuizzesController],
   providers: [QuizzesService],

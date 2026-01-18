@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MotivationService } from '../motivation/motivation.service';
+import { UsersService } from '../users/users.service';
+import { ExamsService } from '../exams/exams.service';
 
 @Injectable()
 export class DashboardService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly motivationService: MotivationService,
+    private readonly usersService: UsersService,
+    private readonly examsService: ExamsService,
   ) {}
 
   async getDashboard(userId: string) {
@@ -20,6 +24,7 @@ export class DashboardService {
       quickStats,
       focusAnalysis,
       examSuccess,
+      examCountdown,
     ] = await Promise.all([
       this.getOverview(userId),
       this.getSubjects(userId),
@@ -29,6 +34,7 @@ export class DashboardService {
       this.getQuickStats(userId),
       this.getFocusAnalysis(userId),
       this.getExamSuccess(userId),
+      this.getExamCountdown(userId),
     ]);
 
     return {
@@ -40,6 +46,7 @@ export class DashboardService {
       quickStats,
       focusAnalysis,
       examSuccess,
+      examCountdown,
     };
   }
 
@@ -568,6 +575,60 @@ export class DashboardService {
         pendingReviews: 0,
         weakSubjects: [],
         nextGoal: '10 soru ekle',
+      };
+    }
+  }
+
+  /**
+   * 9. SINAVA KALAN GÜN SAYISI
+   */
+  private async getExamCountdown(userId: string) {
+    try {
+      // Kullanıcının examTarget'ını al
+      const user = await this.usersService.findOne(userId);
+      if (!user || !user.examTarget) {
+        return {
+          daysRemaining: null,
+          examDate: null,
+          examName: null,
+          examCode: null,
+        };
+      }
+
+      // Sınav bilgisini al
+      const exam = await this.examsService.findOneByCode(user.examTarget);
+      if (!exam || !exam.examDate) {
+        return {
+          daysRemaining: null,
+          examDate: null,
+          examName: exam?.name || null,
+          examCode: user.examTarget,
+        };
+      }
+
+      // Kaç gün kaldığını hesapla
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Sadece tarih karşılaştırması için saat bilgisini sıfırla
+      
+      const examDate = new Date(exam.examDate);
+      examDate.setHours(0, 0, 0, 0);
+
+      const diffTime = examDate.getTime() - today.getTime();
+      const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      return {
+        daysRemaining: daysRemaining >= 0 ? daysRemaining : null, // Geçmiş tarihler için null
+        examDate: exam.examDate.toISOString().split('T')[0], // YYYY-MM-DD formatında
+        examName: exam.name,
+        examCode: exam.code,
+      };
+    } catch (error) {
+      console.error('Exam countdown fetch error:', error);
+      return {
+        daysRemaining: null,
+        examDate: null,
+        examName: null,
+        examCode: null,
       };
     }
   }

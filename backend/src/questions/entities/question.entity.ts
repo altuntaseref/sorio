@@ -30,6 +30,9 @@ export class Question {
   @Column({ name: 'topic_id' })
   topicId: string;
 
+  @Column({ name: 'exam_code', type: 'varchar', length: 50, nullable: true })
+  examCode?: string; // Hangi sınav için bu soru (TYT, AYT_SAY, etc.)
+
   @Column({ name: 'question_image_url', nullable: true })
   questionImageUrl: string;
 

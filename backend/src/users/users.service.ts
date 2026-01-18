@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ExamsService } from '../exams/exams.service';
 
 @Injectable()
 export class UsersService {
@@ -11,6 +12,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private dataSource: DataSource,
+    private examsService: ExamsService,
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
@@ -69,7 +71,25 @@ export class UsersService {
     }
 
     if (typeof updateDto.examTarget !== 'undefined') {
+      // Exam code'un geçerli olup olmadığını kontrol et
+      if (updateDto.examTarget) {
+        const exam = await this.examsService.findOneByCode(updateDto.examTarget);
+        if (!exam) {
+          throw new BadRequestException(`Invalid exam code: ${updateDto.examTarget}`);
+        }
+      }
       user.examTarget = updateDto.examTarget;
+    }
+
+    if (typeof updateDto.activeExamCode !== 'undefined') {
+      // Active exam code'un geçerli olup olmadığını kontrol et
+      if (updateDto.activeExamCode) {
+        const exam = await this.examsService.findOneByCode(updateDto.activeExamCode);
+        if (!exam) {
+          throw new BadRequestException(`Invalid exam code: ${updateDto.activeExamCode}`);
+        }
+      }
+      user.activeExamCode = updateDto.activeExamCode;
     }
 
     return this.usersRepository.save(user);

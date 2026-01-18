@@ -21,6 +21,9 @@ export class StudySession {
   @Column({ name: 'user_id' })
   userId: string;
 
+  @Column({ name: 'exam_code', type: 'varchar', length: 50, nullable: true })
+  examCode?: string; // Hangi sınav için bu çalışma oturumu (TYT, AYT_SAY, etc.)
+
   @Column({ name: 'subject_id', nullable: true })
   subjectId?: string;
 

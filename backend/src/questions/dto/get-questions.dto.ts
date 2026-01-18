@@ -11,6 +11,10 @@ export class GetQuestionsDto {
   topicId?: string;
 
   @IsOptional()
+  @IsString()
+  examCode?: string; // Hangi sınav için sorular (TYT, AYT_SAY, etc.)
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

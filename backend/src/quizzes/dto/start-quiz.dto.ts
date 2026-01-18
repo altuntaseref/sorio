@@ -13,4 +13,8 @@ export class StartQuizDto {
   @IsOptional()
   @IsUUID('all', { each: true })
   topicIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  examCode?: string; // Hangi sınav için bu quiz (TYT, AYT_SAY, etc.)
 }

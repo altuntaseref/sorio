@@ -12,6 +12,7 @@ import { Subject } from '../subjects/entities/subject.entity';
 import { Topic } from '../topics/entities/topic.entity';
 import { GetQuestionsDto } from './dto/get-questions.dto';
 import { QuestionStatistic } from '../statistics/entities/question-statistic.entity';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class QuestionsService {
@@ -24,10 +25,11 @@ export class QuestionsService {
     private topicsRepository: Repository<Topic>,
     @InjectRepository(QuestionStatistic)
     private statsRepository: Repository<QuestionStatistic>,
+    private usersService: UsersService,
   ) {}
 
   async create(userId: string, createQuestionDto: CreateQuestionDto) {
-    const { subjectId, topicId } = createQuestionDto;
+    const { subjectId, topicId, examCode } = createQuestionDto;
 
     const subject = await this.subjectsRepository.findOne({
       where: [
@@ -52,9 +54,17 @@ export class QuestionsService {
       );
     }
 
+    // Eğer examCode verilmemişse, kullanıcının aktif sınavını kullan
+    let resolvedExamCode = examCode;
+    if (!resolvedExamCode) {
+      const user = await this.usersService.findOne(userId);
+      resolvedExamCode = user?.activeExamCode || null;
+    }
+
     const question = this.questionsRepository.create({
       ...createQuestionDto,
       userId,
+      examCode: resolvedExamCode,
     });
 
     const savedQuestion = await this.questionsRepository.save(question);
@@ -74,8 +84,15 @@ export class QuestionsService {
   }
 
   async findAll(userId: string, getQuestionsDto: GetQuestionsDto) {
-    const { page = 1, limit = 20, subjectId, topicId } = getQuestionsDto;
+    const { page = 1, limit = 20, subjectId, topicId, examCode } = getQuestionsDto;
     const skip = (page - 1) * limit;
+
+    // Eğer examCode verilmemişse, kullanıcının aktif sınavını kullan
+    let resolvedExamCode = examCode;
+    if (!resolvedExamCode) {
+      const user = await this.usersService.findOne(userId);
+      resolvedExamCode = user?.activeExamCode || null;
+    }
 
     const queryBuilder = this.questionsRepository.createQueryBuilder('question');
 
@@ -99,6 +116,14 @@ export class QuestionsService {
 
     if (topicId) {
       queryBuilder.andWhere('question.topicId = :topicId', { topicId });
+    }
+
+    // exam_code ile filtreleme (null olabilir - eski sorular için)
+    if (resolvedExamCode !== null) {
+      queryBuilder.andWhere(
+        '(question.examCode = :examCode OR question.examCode IS NULL)',
+        { examCode: resolvedExamCode },
+      );
     }
 
     const [questions, total] = await queryBuilder.getManyAndCount();

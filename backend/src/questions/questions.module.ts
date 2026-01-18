@@ -9,11 +9,13 @@ import { QuestionStatistic } from '../statistics/entities/question-statistic.ent
 import { User } from '../users/entities/user.entity';
 import { UploadModule } from '../upload/upload.module';
 import { PdfService } from './pdf.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Question, Subject, Topic, QuestionStatistic, User]),
     UploadModule,
+    UsersModule,
   ],
   controllers: [QuestionsController],
   providers: [QuestionsService, PdfService],

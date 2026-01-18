@@ -35,6 +35,9 @@ export class Exam {
   @Column({ type: 'integer', default: 0 })
   order: number; // Sıralama için
 
+  @Column({ type: 'date', name: 'exam_date', nullable: true })
+  examDate?: Date; // Sınav tarihi (manuel girilecek)
+
   @OneToMany(() => ExamSection, (section) => section.exam, { cascade: true })
   sections: ExamSection[];
 
