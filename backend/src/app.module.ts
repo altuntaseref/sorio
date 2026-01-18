@@ -21,6 +21,7 @@ import { StudySessionsModule } from './study-sessions/study-sessions.module';
 import { ExamsModule } from './exams/exams.module';
 import { MockExamsModule } from './mock-exams/mock-exams.module';
 import { PricingModule } from './pricing/pricing.module';
+import { AdminModule } from './admin/admin.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -54,6 +55,7 @@ import { APP_GUARD } from '@nestjs/core';
     ExamsModule,
     MockExamsModule,
     PricingModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
