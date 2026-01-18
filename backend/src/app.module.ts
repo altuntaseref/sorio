@@ -20,6 +20,7 @@ import { AssetsModule } from './assets/assets.module';
 import { StudySessionsModule } from './study-sessions/study-sessions.module';
 import { ExamsModule } from './exams/exams.module';
 import { MockExamsModule } from './mock-exams/mock-exams.module';
+import { PricingModule } from './pricing/pricing.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -52,6 +53,7 @@ import { APP_GUARD } from '@nestjs/core';
     StudySessionsModule,
     ExamsModule,
     MockExamsModule,
+    PricingModule,
   ],
   controllers: [AppController],
   providers: [
