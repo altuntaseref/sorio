@@ -131,6 +131,12 @@ export class QuizzesService {
     );
 
     if (questions.length === 0) {
+      if (mode === 'wrong-answers') {
+        return {
+          empty: true,
+          message: 'Henüz yanlışın yok.',
+        };
+      }
       throw new NotFoundException('No questions found matching your criteria');
     }
 

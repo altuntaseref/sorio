@@ -17,6 +17,17 @@ export class QuizzesController {
     @Body() startQuizDto: StartQuizDto,
   ) {
     const data = await this.quizzesService.startQuiz(userId, startQuizDto);
+    if (data?.empty) {
+      return {
+        success: false,
+        message: data.message,
+        data: {
+          quizId: null,
+          totalQuestions: 0,
+          questions: [],
+        },
+      };
+    }
     return { success: true, data };
   }
 
