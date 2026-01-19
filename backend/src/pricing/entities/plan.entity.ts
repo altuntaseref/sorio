@@ -25,6 +25,24 @@ export class Plan {
   @Column({ name: 'billing_period', type: 'varchar', length: 20, nullable: true })
   billingPeriod?: 'MONTHLY' | 'YEARLY' | 'ONE_TIME';
 
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  title?: string; // Mobilde görünen başlık (örn: "Temel Deneyim")
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  badge?: string; // "En Popüler 🔥"
+
+  @Column({ name: 'price_monthly', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  priceMonthly?: number;
+
+  @Column({ name: 'price_yearly', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  priceYearly?: number;
+
+  @Column({ name: 'button_text', type: 'varchar', length: 120, nullable: true })
+  buttonText?: string;
+
+  @Column({ name: 'feature_texts', type: 'text', array: true, nullable: true })
+  featureTexts?: string[];
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

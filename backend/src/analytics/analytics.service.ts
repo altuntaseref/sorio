@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MotivationService } from '../motivation/motivation.service';
 import { UsersService } from '../users/users.service';
+import { PricingUsageService } from '../pricing/services/pricing-usage.service';
 
 @Injectable()
 export class AnalyticsService {
@@ -9,6 +10,7 @@ export class AnalyticsService {
     private readonly dataSource: DataSource,
     private readonly motivationService: MotivationService,
     private readonly usersService: UsersService,
+    private readonly pricingUsageService: PricingUsageService,
   ) {}
 
   private normalizeDate(value: Date | string) {
@@ -426,6 +428,15 @@ export class AnalyticsService {
     const rangeInfo = this.buildRange(range);
     const period = this.buildRangeInfo(rangeInfo);
 
+    // Check if user has advanced_analytics feature
+    let hasAdvancedAnalytics = false;
+    try {
+      hasAdvancedAnalytics = await this.pricingUsageService.checkAccess(userId, 'advanced_analytics');
+    } catch {
+      // If check fails, user doesn't have access
+      hasAdvancedAnalytics = false;
+    }
+
     try {
       const studyParams: any[] = [userId];
       let studyDateFilter = '';
@@ -631,10 +642,39 @@ export class AnalyticsService {
       const previousNet = Number(lastExams[1]?.total_net || 0);
       const netDelta = Number((lastNet - previousNet).toFixed(2));
 
+      // If user doesn't have advanced_analytics, return limited data
+      if (!hasAdvancedAnalytics) {
+        return {
+          period,
+          isLimited: true,
+          upgradeMessage: 'Detaylı analizler için Pro veya Premium plana geçin',
+          totalProductivity: {
+            totalStudyMinutes,
+            studyDeltaPercent,
+            questionsSolved: totalSolved,
+            accuracyPercent,
+            correctCount,
+            incorrectCount,
+          },
+          examSummary: lastExams[0]
+            ? {
+                examCode,
+                lastExam: {
+                  examName: lastExams[0].exam_name,
+                  examDate: lastExams[0].exam_date,
+                  net: lastNet,
+                },
+              }
+            : null,
+        };
+      }
+
+      // Full analytics for advanced_analytics users
       const motivation = await this.motivationService.getMotivationForUser(userId);
 
       return {
         period,
+        isLimited: false,
         coachInsight: {
           ...motivation,
           ctaLabel: 'Detaylı Raporu Gör',

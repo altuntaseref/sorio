@@ -10,6 +10,12 @@ type Plan = {
   priceAmount?: number;
   priceCurrency?: string;
   billingPeriod?: string;
+  title?: string;
+  badge?: string;
+  priceMonthly?: number;
+  priceYearly?: number;
+  buttonText?: string;
+  featureTexts?: string[];
   isActive: boolean;
 };
 
@@ -45,6 +51,12 @@ export default function PricingPage() {
     priceAmount: '',
     priceCurrency: 'TRY',
     billingPeriod: 'MONTHLY',
+    title: '',
+    badge: '',
+    priceMonthly: '',
+    priceYearly: '',
+    buttonText: '',
+    featureTexts: '',
   });
   const [newFeature, setNewFeature] = useState({
     key: '',
@@ -155,10 +167,30 @@ export default function PricingPage() {
         priceAmount: newPlan.priceAmount ? Number(newPlan.priceAmount) : undefined,
         priceCurrency: newPlan.priceCurrency,
         billingPeriod: newPlan.billingPeriod,
+        title: newPlan.title || undefined,
+        badge: newPlan.badge || undefined,
+        priceMonthly: newPlan.priceMonthly ? Number(newPlan.priceMonthly) : undefined,
+        priceYearly: newPlan.priceYearly ? Number(newPlan.priceYearly) : undefined,
+        buttonText: newPlan.buttonText || undefined,
+        featureTexts: newPlan.featureTexts
+          ? newPlan.featureTexts.split('\n').map((line) => line.trim()).filter(Boolean)
+          : [],
       }),
     });
     setPlans((prev) => [...prev, created]);
-    setNewPlan({ name: '', code: '', priceAmount: '', priceCurrency: 'TRY', billingPeriod: 'MONTHLY' });
+    setNewPlan({
+      name: '',
+      code: '',
+      priceAmount: '',
+      priceCurrency: 'TRY',
+      billingPeriod: 'MONTHLY',
+      title: '',
+      badge: '',
+      priceMonthly: '',
+      priceYearly: '',
+      buttonText: '',
+      featureTexts: '',
+    });
   };
 
   const createFeature = async () => {
@@ -171,9 +203,13 @@ export default function PricingPage() {
   };
 
   const updatePlan = async (plan: Plan) => {
+    const payload = {
+      ...plan,
+      featureTexts: plan.featureTexts ?? [],
+    };
     const updated = await apiFetch<Plan>(`/admin/plans/${plan.id}`, {
       method: 'PATCH',
-      body: JSON.stringify(plan),
+      body: JSON.stringify(payload),
     });
     setPlans((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   };
@@ -278,6 +314,43 @@ export default function PricingPage() {
             <option value="YEARLY">YEARLY</option>
             <option value="ONE_TIME">ONE_TIME</option>
           </select>
+          <input
+            className="input"
+            placeholder="Başlık"
+            value={newPlan.title}
+            onChange={(e) => setNewPlan({ ...newPlan, title: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Badge"
+            value={newPlan.badge}
+            onChange={(e) => setNewPlan({ ...newPlan, badge: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Aylık fiyat"
+            value={newPlan.priceMonthly}
+            onChange={(e) => setNewPlan({ ...newPlan, priceMonthly: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Yıllık fiyat"
+            value={newPlan.priceYearly}
+            onChange={(e) => setNewPlan({ ...newPlan, priceYearly: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Buton yazısı"
+            value={newPlan.buttonText}
+            onChange={(e) => setNewPlan({ ...newPlan, buttonText: e.target.value })}
+          />
+          <textarea
+            className="input"
+            rows={3}
+            placeholder="Özellikler (satır satır)"
+            value={newPlan.featureTexts}
+            onChange={(e) => setNewPlan({ ...newPlan, featureTexts: e.target.value })}
+          />
           <button className="button" onClick={createPlan}>
             Plan Ekle
           </button>
@@ -291,6 +364,12 @@ export default function PricingPage() {
               <th>Fiyat</th>
               <th>Para</th>
               <th>Periyot</th>
+              <th>Başlık</th>
+              <th>Badge</th>
+              <th>Aylık</th>
+              <th>Yıllık</th>
+              <th>Buton</th>
+              <th>Özellikler</th>
               <th>Aktif</th>
               <th></th>
             </tr>
@@ -362,6 +441,97 @@ export default function PricingPage() {
                     <option value="YEARLY">YEARLY</option>
                     <option value="ONE_TIME">ONE_TIME</option>
                   </select>
+                </td>
+                <td>
+                  <input
+                    className="input"
+                    value={plan.title ?? ''}
+                    onChange={(e) =>
+                      setPlans((prev) =>
+                        prev.map((p) =>
+                          p.id === plan.id ? { ...p, title: e.target.value } : p,
+                        ),
+                      )
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input"
+                    value={plan.badge ?? ''}
+                    onChange={(e) =>
+                      setPlans((prev) =>
+                        prev.map((p) =>
+                          p.id === plan.id ? { ...p, badge: e.target.value } : p,
+                        ),
+                      )
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input"
+                    value={plan.priceMonthly ?? ''}
+                    onChange={(e) =>
+                      setPlans((prev) =>
+                        prev.map((p) =>
+                          p.id === plan.id
+                            ? { ...p, priceMonthly: Number(e.target.value) }
+                            : p,
+                        ),
+                      )
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input"
+                    value={plan.priceYearly ?? ''}
+                    onChange={(e) =>
+                      setPlans((prev) =>
+                        prev.map((p) =>
+                          p.id === plan.id
+                            ? { ...p, priceYearly: Number(e.target.value) }
+                            : p,
+                        ),
+                      )
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input"
+                    value={plan.buttonText ?? ''}
+                    onChange={(e) =>
+                      setPlans((prev) =>
+                        prev.map((p) =>
+                          p.id === plan.id ? { ...p, buttonText: e.target.value } : p,
+                        ),
+                      )
+                    }
+                  />
+                </td>
+                <td>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={(plan.featureTexts ?? []).join('\n')}
+                    onChange={(e) =>
+                      setPlans((prev) =>
+                        prev.map((p) =>
+                          p.id === plan.id
+                            ? {
+                                ...p,
+                                featureTexts: e.target.value
+                                  .split('\n')
+                                  .map((line) => line.trim())
+                                  .filter(Boolean),
+                              }
+                            : p,
+                        ),
+                      )
+                    }
+                  />
                 </td>
                 <td>
                   <input

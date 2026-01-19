@@ -9,6 +9,7 @@ import { MockExamSubjectResult } from './entities/mock-exam-subject-result.entit
 import { Subject } from '../subjects/entities/subject.entity';
 import { Exam } from '../exams/entities/exam.entity';
 import { User } from '../users/entities/user.entity';
+import { PricingModule } from '../pricing/pricing.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { User } from '../users/entities/user.entity';
       Exam,
       User,
     ]),
+    PricingModule,
   ],
   controllers: [MockExamsController],
   providers: [MockExamsService],

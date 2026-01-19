@@ -13,4 +13,10 @@ export class PricingController {
     const data = await this.pricingService.getMobilePricing(userId);
     return { data };
   }
+
+  @Get('catalog')
+  async getPlanCatalog(@GetUser('id') userId: string) {
+    const data = await this.pricingService.getPlanCatalog(userId);
+    return { success: true, data };
+  }
 }

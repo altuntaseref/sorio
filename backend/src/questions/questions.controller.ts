@@ -21,6 +21,10 @@ import { GetQuestionsDto } from './dto/get-questions.dto';
 import { R2Service } from '../upload/r2.service';
 import { PdfService } from './pdf.service';
 import { GeneratePdfDto } from './dto/generate-pdf.dto';
+import { FeatureAccess } from '../pricing/decorators/feature-access.decorator';
+import { FeatureAccessGuard } from '../pricing/guards/feature-access.guard';
+import { FeatureUsageInterceptor } from '../pricing/interceptors/feature-usage.interceptor';
+import { UseInterceptors } from '@nestjs/common';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
@@ -33,6 +37,9 @@ export class QuestionsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtAuthGuard, FeatureAccessGuard)
+  @UseInterceptors(FeatureUsageInterceptor)
+  @FeatureAccess('question_upload_limit')
   async create(
     @GetUser('id') userId: string,
     @Body() createQuestionDto: CreateQuestionDto,
@@ -124,6 +131,9 @@ export class QuestionsController {
    */
   @Post('generate-pdf')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, FeatureAccessGuard)
+  @UseInterceptors(FeatureUsageInterceptor)
+  @FeatureAccess('pdf_export')
   async generatePdf(
     @GetUser('id') userId: string,
     @Body() generatePdfDto: GeneratePdfDto,

@@ -12,7 +12,8 @@ export class FeatureLimitDto {
   key: string;
   type: 'BOOLEAN' | 'INTEGER';
   description: string;
-  limitValue: number;
+  limitValue: number; // For INTEGER: limit value, for BOOLEAN: 1=enabled, 0=disabled
+  isEnabled?: boolean; // For BOOLEAN features: true/false (more explicit)
   resetPeriod: 'DAILY' | 'MONTHLY' | 'NEVER';
 }
 

@@ -10,12 +10,14 @@ import { User } from '../users/entities/user.entity';
 import { UploadModule } from '../upload/upload.module';
 import { PdfService } from './pdf.service';
 import { UsersModule } from '../users/users.module';
+import { PricingModule } from '../pricing/pricing.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Question, Subject, Topic, QuestionStatistic, User]),
     UploadModule,
     UsersModule,
+    PricingModule,
   ],
   controllers: [QuestionsController],
   providers: [QuestionsService, PdfService],

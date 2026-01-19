@@ -14,6 +14,10 @@ import { User } from '../users/entities/user.entity';
 import { SetExamTargetsDto } from './dto/set-exam-targets.dto';
 import { SetExamGoalDto } from './dto/set-exam-goal.dto';
 import { CreateMockExamDto } from './dto/create-mock-exam.dto';
+import { FeatureAccess } from '../pricing/decorators/feature-access.decorator';
+import { FeatureAccessGuard } from '../pricing/guards/feature-access.guard';
+import { FeatureUsageInterceptor } from '../pricing/interceptors/feature-usage.interceptor';
+import { UseInterceptors } from '@nestjs/common';
 
 @Controller('mock-exams')
 @UseGuards(JwtAuthGuard)
@@ -87,6 +91,9 @@ export class MockExamsController {
 
   // Deneme sınavı kaydet
   @Post()
+  @UseGuards(JwtAuthGuard, FeatureAccessGuard)
+  @UseInterceptors(FeatureUsageInterceptor)
+  @FeatureAccess('mock_exam_limit')
   async createMockExam(@GetUser() user: User, @Body() dto: CreateMockExamDto) {
     const mockExam = await this.mockExamsService.createMockExam(
       user.id,
@@ -126,6 +133,8 @@ export class MockExamsController {
 
   // Gelişim grafiği
   @Get('progress/:examCode')
+  @UseGuards(JwtAuthGuard, FeatureAccessGuard)
+  @FeatureAccess('mock_exam_analytics')
   async getProgress(@GetUser() user: User, @Param('examCode') examCode: string) {
     const progress = await this.mockExamsService.getProgress(
       user.id,

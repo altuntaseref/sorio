@@ -5,6 +5,8 @@ import { AnalyticsService } from './analytics.service';
 import { GetWeeklyActivityDto } from './dto/get-weekly-activity.dto';
 import { AnalysisRangeDto } from './dto/analysis-range.dto';
 import { User } from '../users/entities/user.entity';
+import { FeatureAccess } from '../pricing/decorators/feature-access.decorator';
+import { FeatureAccessGuard } from '../pricing/guards/feature-access.guard';
 
 @Controller('analytics')
 @UseGuards(JwtAuthGuard)
@@ -12,12 +14,16 @@ export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('overview')
+  @UseGuards(FeatureAccessGuard)
+  @FeatureAccess('basic_analytics')
   async getAnalyticsOverview(@GetUser('id') userId: string) {
     const data = await this.analyticsService.getAnalyticsOverview(userId);
     return { success: true, data };
   }
 
   @Get('weekly-activity')
+  @UseGuards(FeatureAccessGuard)
+  @FeatureAccess('basic_analytics')
   getWeeklyActivity(
     @GetUser() user: User,
     @Query() getWeeklyActivityDto: GetWeeklyActivityDto,
@@ -29,6 +35,8 @@ export class AnalyticsController {
   }
 
   @Get('subjects')
+  @UseGuards(FeatureAccessGuard)
+  @FeatureAccess('basic_analytics')
   async getSubjectStatistics(@GetUser('id') userId: string) {
     const data = await this.analyticsService.getSubjectStatistics(userId);
     return { success: true, data };
@@ -47,6 +55,8 @@ export class AnalyticsController {
   }
 
   @Get('questions')
+  @UseGuards(FeatureAccessGuard)
+  @FeatureAccess('advanced_analytics')
   async getQuestionAnalysis(
     @GetUser('id') userId: string,
     @Query() rangeDto: AnalysisRangeDto,
@@ -59,6 +69,8 @@ export class AnalyticsController {
   }
 
   @Get('time')
+  @UseGuards(FeatureAccessGuard)
+  @FeatureAccess('advanced_analytics')
   async getTimeAnalysis(
     @GetUser('id') userId: string,
     @Query() rangeDto: AnalysisRangeDto,
@@ -71,6 +83,8 @@ export class AnalyticsController {
   }
 
   @Get('exams')
+  @UseGuards(FeatureAccessGuard)
+  @FeatureAccess('mock_exam_analytics')
   async getExamAnalysis(
     @GetUser('id') userId: string,
     @Query() rangeDto: AnalysisRangeDto,

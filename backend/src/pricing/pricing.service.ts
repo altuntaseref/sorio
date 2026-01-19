@@ -63,6 +63,7 @@ export class PricingService {
         type: limit.feature.type,
         description: limit.feature.description,
         limitValue: limit.feature.type === 'BOOLEAN' ? (limit.isEnabled ? 1 : 0) : limit.limitValue,
+        isEnabled: limit.feature.type === 'BOOLEAN' ? limit.isEnabled : undefined,
         resetPeriod: limit.resetPeriod,
       })),
       usage: planLimits.map((limit) => {
@@ -80,7 +81,7 @@ export class PricingService {
     };
   }
 
-  private async getActivePlan(userId: string): Promise<{ plan: Plan; status?: string }> {
+  async getActivePlan(userId: string): Promise<{ plan: Plan; status?: string }> {
     const activeUserPlan = await this.userPlanRepository.findOne({
       where: { userId, status: In(['active', 'trialing']) },
       relations: ['plan'],
@@ -100,5 +101,27 @@ export class PricingService {
     }
 
     return { plan: fallbackPlan };
+  }
+
+  async getPlanCatalog(userId: string) {
+    const { plan: activePlan } = await this.getActivePlan(userId);
+    const plans = await this.planRepository.find({
+      where: { isActive: true },
+      order: { createdAt: 'ASC' },
+    });
+
+    return plans.map((plan) => ({
+      id: plan.code,
+      name: plan.name,
+      title: plan.title ?? plan.name,
+      badge: plan.badge ?? null,
+      price_monthly: plan.priceMonthly ?? 0,
+      price_yearly: plan.priceYearly ?? 0,
+      features: plan.featureTexts ?? [],
+      is_current: plan.id === activePlan.id,
+      button_text:
+        plan.buttonText ??
+        (plan.id === activePlan.id ? 'Mevcut Plan' : `${plan.name} Planına Geç`),
+    }));
   }
 }
