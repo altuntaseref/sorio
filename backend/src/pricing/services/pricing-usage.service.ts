@@ -65,14 +65,14 @@ export class PricingUsageService {
       throw new ForbiddenException('Feature not included in plan');
     }
 
-    if (planLimit.limitValue === -1) {
+    if (feature.type === 'BOOLEAN') {
+      if (!planLimit.isEnabled) {
+        throw new ForbiddenException('Feature not available for this plan');
+      }
       return true;
     }
 
-    if (feature.type === 'BOOLEAN') {
-      if (planLimit.limitValue <= 0) {
-        throw new ForbiddenException('Feature not available for this plan');
-      }
+    if (planLimit.limitValue === -1) {
       return true;
     }
 

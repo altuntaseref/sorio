@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsUUID, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class UpdatePlanLimitDto {
   @IsUUID()
@@ -7,9 +7,14 @@ export class UpdatePlanLimitDto {
   @IsUUID()
   featureId: string;
 
+  @IsOptional()
   @IsInt()
   @Min(-1)
-  limitValue: number;
+  limitValue?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isEnabled?: boolean;
 
   @IsIn(['DAILY', 'MONTHLY', 'NEVER'])
   resetPeriod: 'DAILY' | 'MONTHLY' | 'NEVER';

@@ -26,6 +26,7 @@ type PlanLimit = {
   featureId: string;
   limitValue: number;
   resetPeriod: 'DAILY' | 'MONTHLY' | 'NEVER';
+  isEnabled?: boolean;
   plan: Plan;
   feature: Feature;
 };
@@ -35,6 +36,8 @@ export default function PricingPage() {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [planLimits, setPlanLimits] = useState<PlanLimit[]>([]);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -77,7 +80,8 @@ export default function PricingPage() {
     planId: plan.id,
     featureId: feature.id,
     limitValue: feature.type === 'BOOLEAN' ? 0 : 0,
-    resetPeriod: 'MONTHLY',
+    resetPeriod: feature.type === 'BOOLEAN' ? 'NEVER' : 'MONTHLY',
+    isEnabled: false,
     plan,
     feature,
   });
@@ -85,8 +89,8 @@ export default function PricingPage() {
   const handleLimitChange = (
     planId: string,
     featureId: string,
-    field: 'limitValue' | 'resetPeriod',
-    value: number | 'DAILY' | 'MONTHLY' | 'NEVER',
+    field: 'limitValue' | 'resetPeriod' | 'isEnabled',
+    value: number | 'DAILY' | 'MONTHLY' | 'NEVER' | boolean,
   ) => {
     const key = `${planId}-${featureId}`;
     const existing = editedLimits[key] ?? limitMap.get(key);
@@ -97,24 +101,49 @@ export default function PricingPage() {
     const updated = {
       ...current,
       [field]: value,
-    };
+    } as PlanLimit;
     setEditedLimits((prev) => ({ ...prev, [key]: updated }));
   };
 
   const saveLimits = async () => {
-    const payload = Object.values(editedLimits).map((limit) => ({
-      planId: limit.planId,
-      featureId: limit.featureId,
-      limitValue: Number(limit.limitValue),
-      resetPeriod: limit.resetPeriod,
-    }));
-    if (!payload.length) return;
-    const updated = await apiFetch<PlanLimit[]>('/admin/plan-limits', {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
+    const payload = Object.values(editedLimits).map((limit) => {
+      if (limit.feature.type === 'BOOLEAN') {
+        const enabled = limit.isEnabled ?? limit.limitValue > 0;
+        return {
+          planId: limit.planId,
+          featureId: limit.featureId,
+          isEnabled: enabled,
+          limitValue: enabled ? 1 : 0,
+          resetPeriod: 'NEVER',
+        };
+      }
+      return {
+        planId: limit.planId,
+        featureId: limit.featureId,
+        limitValue: Number(limit.limitValue),
+        resetPeriod: limit.resetPeriod,
+      };
     });
-    setPlanLimits(updated);
-    setEditedLimits({});
+    if (!payload.length) {
+      setStatus('Kaydedilecek değişiklik yok.');
+      return;
+    }
+    setSaving(true);
+    setStatus('');
+    try {
+      const updated = await apiFetch<PlanLimit[]>('/admin/plan-limits', {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      setPlanLimits(updated);
+      setEditedLimits({});
+      setStatus('Kaydedildi.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Kaydetme hatası';
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const createPlan = async () => {
@@ -157,12 +186,60 @@ export default function PricingPage() {
     setFeatures((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
   };
 
+  const deleteFeature = async (featureId: string) => {
+    await apiFetch(`/admin/features/${featureId}`, {
+      method: 'DELETE',
+    });
+    setFeatures((prev) => prev.filter((feature) => feature.id !== featureId));
+    setPlanLimits((prev) => prev.filter((limit) => limit.featureId !== featureId));
+  };
+
   if (error) {
     return <div className="card">Hata: {error}</div>;
   }
 
   return (
     <div className="grid" style={{ gap: 24 }}>
+      <div className="card">
+        <div className="page-title" style={{ marginBottom: 12 }}>
+          Plan Özeti
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              {plans.map((plan) => (
+                <th key={plan.id}>{plan.name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {features.map((feature) => (
+              <tr key={feature.id}>
+                <td>{feature.key}</td>
+                {plans.map((plan) => {
+                  const key = `${plan.id}-${feature.id}`;
+                  const limit = limitMap.get(key);
+                  const value =
+                    feature.type === 'BOOLEAN'
+                      ? limit?.isEnabled
+                        ? 'true'
+                        : 'false'
+                      : limit?.limitValue ?? 0;
+                  const reset = feature.type === 'BOOLEAN' ? '' : limit?.resetPeriod ?? '';
+                  return (
+                    <td key={plan.id}>
+                      <div style={{ fontWeight: 600 }}>{value}</div>
+                      {reset ? <div className="muted">{reset}</div> : null}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       <div className="card">
         <div className="page-title" style={{ marginBottom: 12 }}>
           Planlar
@@ -346,6 +423,7 @@ export default function PricingPage() {
               <th>Açıklama</th>
               <th>Tip</th>
               <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -400,6 +478,14 @@ export default function PricingPage() {
                     Kaydet
                   </button>
                 </td>
+                <td>
+                  <button
+                    className="button secondary"
+                    onClick={() => deleteFeature(feature.id)}
+                  >
+                    Sil
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -409,9 +495,12 @@ export default function PricingPage() {
       <div className="card">
         <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
           <div className="page-title">Plan Limitleri</div>
-          <button className="button" onClick={saveLimits}>
-            Değişiklikleri Kaydet
-          </button>
+          <div className="row">
+            {status ? <div className="muted">{status}</div> : null}
+            <button className="button" onClick={saveLimits} disabled={saving}>
+              {saving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+            </button>
+          </div>
         </div>
         <table className="table">
           <thead>
@@ -435,19 +524,37 @@ export default function PricingPage() {
                   return (
                     <td key={plan.id}>
                       <div className="grid" style={{ gap: 6 }}>
-                        <input
-                          className="input"
-                          type="number"
-                          value={limit.limitValue}
-                          onChange={(e) =>
-                            handleLimitChange(
-                              plan.id,
-                              feature.id,
-                              'limitValue',
-                              Number(e.target.value),
-                            )
-                          }
-                        />
+                        {feature.type === 'BOOLEAN' ? (
+                          <select
+                            className="select"
+                            value={(limit.isEnabled ?? limit.limitValue > 0) ? 'true' : 'false'}
+                            onChange={(e) =>
+                              handleLimitChange(
+                                plan.id,
+                                feature.id,
+                                'isEnabled',
+                                e.target.value === 'true',
+                              )
+                            }
+                          >
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                          </select>
+                        ) : (
+                          <input
+                            className="input"
+                            type="number"
+                            value={limit.limitValue}
+                            onChange={(e) =>
+                              handleLimitChange(
+                                plan.id,
+                                feature.id,
+                                'limitValue',
+                                Number(e.target.value),
+                              )
+                            }
+                          />
+                        )}
                         <select
                           className="select"
                           value={limit.resetPeriod}
@@ -459,6 +566,7 @@ export default function PricingPage() {
                               e.target.value as PlanLimit['resetPeriod'],
                             )
                           }
+                          disabled={feature.type === 'BOOLEAN'}
                         >
                           <option value="DAILY">DAILY</option>
                           <option value="MONTHLY">MONTHLY</option>

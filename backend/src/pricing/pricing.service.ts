@@ -62,7 +62,7 @@ export class PricingService {
         key: limit.feature.key,
         type: limit.feature.type,
         description: limit.feature.description,
-        limitValue: limit.limitValue,
+        limitValue: limit.feature.type === 'BOOLEAN' ? (limit.isEnabled ? 1 : 0) : limit.limitValue,
         resetPeriod: limit.resetPeriod,
       })),
       usage: planLimits.map((limit) => {

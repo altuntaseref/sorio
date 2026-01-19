@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
+import { DataSource, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { LoginLog } from '../auth/entities/login-log.entity';
 import { Plan } from '../pricing/entities/plan.entity';
@@ -204,7 +204,8 @@ export class AdminService {
           planId: savedPlan.id,
           featureId: feature.id,
           limitValue: 0,
-          resetPeriod: 'MONTHLY',
+          resetPeriod: feature.type === 'BOOLEAN' ? 'NEVER' : 'MONTHLY',
+          isEnabled: false,
         })),
         ['planId', 'featureId'],
       );
@@ -237,7 +238,8 @@ export class AdminService {
           planId: plan.id,
           featureId: savedFeature.id,
           limitValue: 0,
-          resetPeriod: 'MONTHLY',
+          resetPeriod: savedFeature.type === 'BOOLEAN' ? 'NEVER' : 'MONTHLY',
+          isEnabled: false,
         })),
         ['planId', 'featureId'],
       );
@@ -255,6 +257,15 @@ export class AdminService {
     return this.featureRepository.save(feature);
   }
 
+  async deleteFeature(featureId: string) {
+    const feature = await this.featureRepository.findOne({ where: { id: featureId } });
+    if (!feature) {
+      throw new NotFoundException('Feature not found');
+    }
+    await this.featureRepository.remove(feature);
+    return { success: true };
+  }
+
   async getPlanLimits() {
     return this.planLimitRepository.find({
       relations: ['plan', 'feature'],
@@ -267,15 +278,43 @@ export class AdminService {
       throw new BadRequestException('No plan limits provided');
     }
 
-    await this.planLimitRepository.upsert(
-      limits.map((limit) => ({
+    const featureIds = limits.map((limit) => limit.featureId);
+    const features = await this.featureRepository.find({
+      where: { id: In(featureIds) },
+    });
+    const featureTypeById = new Map(features.map((feature) => [feature.id, feature.type]));
+
+    const payload: Array<Partial<PlanLimit>> = limits.map((limit) => {
+      const type = featureTypeById.get(limit.featureId);
+      if (!type) {
+        throw new BadRequestException(`Feature not found: ${limit.featureId}`);
+      }
+
+      if (type === 'INTEGER') {
+        if (limit.limitValue === undefined || limit.limitValue === null) {
+          throw new BadRequestException('limitValue is required for INTEGER features');
+        }
+        return {
+          planId: limit.planId,
+          featureId: limit.featureId,
+          limitValue: limit.limitValue,
+          resetPeriod: limit.resetPeriod as PlanLimit['resetPeriod'],
+          isEnabled: false,
+        };
+      }
+
+      const isEnabled =
+        limit.isEnabled !== undefined ? limit.isEnabled : (limit.limitValue ?? 0) > 0;
+      return {
         planId: limit.planId,
         featureId: limit.featureId,
-        limitValue: limit.limitValue,
-        resetPeriod: limit.resetPeriod,
-      })),
-      ['planId', 'featureId'],
-    );
+        limitValue: isEnabled ? 1 : 0,
+        resetPeriod: 'NEVER' as PlanLimit['resetPeriod'],
+        isEnabled,
+      };
+    });
+
+    await this.planLimitRepository.upsert(payload, ['planId', 'featureId']);
 
     return this.getPlanLimits();
   }

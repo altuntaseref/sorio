@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreatePlanDto {
@@ -12,6 +13,7 @@ export class CreatePlanDto {
   revenueCatId?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   priceAmount?: number;
@@ -39,6 +41,7 @@ export class UpdatePlanDto {
   revenueCatId?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   priceAmount?: number;

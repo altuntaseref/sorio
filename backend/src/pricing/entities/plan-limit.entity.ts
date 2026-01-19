@@ -26,6 +26,9 @@ export class PlanLimit {
   @Column({ name: 'limit_value', type: 'integer' })
   limitValue: number; // -1 sınırsız
 
+  @Column({ name: 'is_enabled', type: 'boolean', default: false })
+  isEnabled: boolean; // BOOLEAN feature'lar için kullanılacak
+
   @Column({ name: 'reset_period', type: 'varchar', length: 20 })
   resetPeriod: 'DAILY' | 'MONTHLY' | 'NEVER';
 

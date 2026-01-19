@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminTokenGuard } from './guards/admin-token.guard';
 import { CreatePlanDto, UpdatePlanDto, UpdateUserPlanDto } from './dto/plan.dto';
@@ -77,6 +77,12 @@ export class AdminController {
   @Patch('features/:id')
   async updateFeature(@Param('id') featureId: string, @Body() dto: UpdateFeatureDto) {
     const data = await this.adminService.updateFeature(featureId, dto);
+    return { data };
+  }
+
+  @Delete('features/:id')
+  async deleteFeature(@Param('id') featureId: string) {
+    const data = await this.adminService.deleteFeature(featureId);
     return { data };
   }
 

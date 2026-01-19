@@ -45,6 +45,7 @@ Alanlar:
 - `plan_id` (FK → `plans`)
 - `feature_id` (FK → `features`)
 - `limit_value` (integer, **-1 = sınırsız**)
+- `is_enabled` (boolean, **BOOLEAN feature'lar için**)
 - `reset_period` (`DAILY` | `MONTHLY` | `NEVER`)
 - `created_at`, `updated_at`
 
@@ -52,6 +53,10 @@ Kısıtlar:
 - (`plan_id`, `feature_id`) **unique**
 - `limit_value >= -1`
 - `reset_period` enum check
+
+Not:
+- `type = BOOLEAN` için **asıl kontrol** `is_enabled` üzerinden yapılır.
+- `type = INTEGER` için **asıl kontrol** `limit_value` üzerinden yapılır.
 
 ### `user_usage`
 Kullanıcı kullanım sayacı (periyot bazında).
