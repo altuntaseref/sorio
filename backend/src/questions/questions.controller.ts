@@ -25,6 +25,8 @@ import { FeatureAccess } from '../pricing/decorators/feature-access.decorator';
 import { FeatureAccessGuard } from '../pricing/guards/feature-access.guard';
 import { FeatureUsageInterceptor } from '../pricing/interceptors/feature-usage.interceptor';
 import { UseInterceptors } from '@nestjs/common';
+import { AiSolveDto } from './dto/ai-solve.dto';
+import { AiSolveService } from './services/ai-solve.service';
 
 @Controller('questions')
 @UseGuards(JwtAuthGuard)
@@ -33,6 +35,7 @@ export class QuestionsController {
     private readonly questionsService: QuestionsService,
     private readonly r2Service: R2Service,
     private readonly pdfService: PdfService,
+    private readonly aiSolveService: AiSolveService,
   ) {}
 
   @Post()
@@ -123,6 +126,30 @@ export class QuestionsController {
         );
       });
     }
+  }
+
+  /**
+   * Soru görselini AI ile çözer
+   * POST /api/questions/ai-solve
+   */
+  @Post('ai-solve')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, FeatureAccessGuard)
+  @UseInterceptors(FeatureUsageInterceptor)
+  @FeatureAccess('ai_solve_limit')
+  async aiSolve(
+    @GetUser('id') userId: string,
+    @Body() aiSolveDto: AiSolveDto,
+  ) {
+    const result = await this.aiSolveService.solveQuestion(
+      userId,
+      aiSolveDto.questionImageUrl,
+    );
+
+    return {
+      success: true,
+      data: result,
+    };
   }
 
   /**

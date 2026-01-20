@@ -146,7 +146,7 @@ a {
   display: flex;
   gap: 8px;
   align-items: center;
-}
+  }
 
 .row {
   display: flex;

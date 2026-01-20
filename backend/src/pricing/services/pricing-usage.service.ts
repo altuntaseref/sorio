@@ -159,7 +159,7 @@ export class PricingUsageService {
     }
   }
 
-  private async getCurrentUsageCount(
+  async getCurrentUsageCount(
     userId: string,
     featureId: string,
     resetPeriod: ResetPeriod,
