@@ -336,6 +336,26 @@ export class AdminService {
     }
 
     const status = dto.status ?? 'active';
+    // Başlama tarihi DTO'dan gelirse onu kullan, yoksa şu anki tarihi kullan
+    const startsAt = dto.startsAt ? new Date(dto.startsAt) : new Date();
+
+    // Billing period'a göre bitiş tarihini hesapla
+    let endsAt: Date | null = null;
+    let renewsAt: Date | null = null;
+
+    if (plan.billingPeriod === 'MONTHLY') {
+      endsAt = new Date(startsAt);
+      endsAt.setMonth(endsAt.getMonth() + 1);
+      renewsAt = new Date(endsAt);
+    } else if (plan.billingPeriod === 'YEARLY') {
+      endsAt = new Date(startsAt);
+      endsAt.setFullYear(endsAt.getFullYear() + 1);
+      renewsAt = new Date(endsAt);
+    } else if (plan.billingPeriod === 'ONE_TIME') {
+      // ONE_TIME için sınırsız (null) veya çok uzun bir tarih
+      endsAt = null;
+      renewsAt = null;
+    }
 
     await this.dataSource.transaction(async (manager) => {
       await manager
@@ -350,7 +370,9 @@ export class AdminService {
         userId,
         planId: plan.id,
         status,
-        startsAt: new Date(),
+        startsAt,
+        endsAt,
+        renewsAt,
       });
 
       await manager.save(UserPlan, newUserPlan);

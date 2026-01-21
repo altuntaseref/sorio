@@ -263,10 +263,11 @@ export default function PricingPage() {
                         : 'false'
                       : limit?.limitValue ?? 0;
                   const reset = feature.type === 'BOOLEAN' ? '' : limit?.resetPeriod ?? '';
+                  const resetDisplay = reset === 'NEVER' ? 'TOPLAM' : reset;
                   return (
                     <td key={plan.id}>
                       <div style={{ fontWeight: 600 }}>{value}</div>
-                      {reset ? <div className="muted">{reset}</div> : null}
+                      {reset ? <div className="muted">{resetDisplay}</div> : null}
                     </td>
                   );
                 })}

@@ -22,7 +22,7 @@ export class PricingService {
   ) {}
 
   async getMobilePricing(userId: string): Promise<MobilePricingResponseDto> {
-    const { plan, status } = await this.getActivePlan(userId);
+    const { plan, status, userPlan } = await this.getActivePlan(userId);
 
     const planLimits = await this.planLimitRepository.find({
       where: { planId: plan.id },
@@ -57,6 +57,9 @@ export class PricingService {
         priceCurrency: plan.priceCurrency,
         billingPeriod: plan.billingPeriod,
         status,
+        startsAt: userPlan?.startsAt,
+        endsAt: userPlan?.endsAt,
+        renewsAt: userPlan?.renewsAt,
       },
       features: planLimits.map((limit) => ({
         key: limit.feature.key,
@@ -81,7 +84,7 @@ export class PricingService {
     };
   }
 
-  async getActivePlan(userId: string): Promise<{ plan: Plan; status?: string }> {
+  async getActivePlan(userId: string): Promise<{ plan: Plan; status?: string; userPlan?: UserPlan }> {
     const activeUserPlan = await this.userPlanRepository.findOne({
       where: { userId, status: In(['active', 'trialing']) },
       relations: ['plan'],
@@ -89,7 +92,7 @@ export class PricingService {
     });
 
     if (activeUserPlan?.plan) {
-      return { plan: activeUserPlan.plan, status: activeUserPlan.status };
+      return { plan: activeUserPlan.plan, status: activeUserPlan.status, userPlan: activeUserPlan };
     }
 
     const fallbackPlan = await this.planRepository.findOne({

@@ -6,6 +6,9 @@ export class ActivePlanDto {
   priceCurrency?: string;
   billingPeriod?: string;
   status?: string;
+  startsAt?: Date;
+  endsAt?: Date;
+  renewsAt?: Date;
 }
 
 export class FeatureLimitDto {

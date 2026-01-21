@@ -129,4 +129,8 @@ export class UpdateUserPlanDto {
   @IsOptional()
   @IsIn(['active', 'paused', 'canceled', 'expired', 'trialing'])
   status?: 'active' | 'paused' | 'canceled' | 'expired' | 'trialing';
+
+  @IsOptional()
+  @Type(() => Date)
+  startsAt?: Date; // Başlama tarihi (verilmezse şu anki tarih kullanılır)
 }
