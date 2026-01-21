@@ -366,14 +366,13 @@ export class AdminService {
         .andWhere('status IN (:...statuses)', { statuses: ['active', 'trialing'] })
         .execute();
 
-      const newUserPlan = manager.create(UserPlan, {
-        userId,
-        planId: plan.id,
-        status,
-        startsAt,
-        endsAt,
-        renewsAt,
-      });
+      const newUserPlan = new UserPlan();
+      newUserPlan.userId = userId;
+      newUserPlan.planId = plan.id;
+      newUserPlan.status = status;
+      newUserPlan.startsAt = startsAt;
+      newUserPlan.endsAt = endsAt ?? undefined;
+      newUserPlan.renewsAt = renewsAt ?? undefined;
 
       await manager.save(UserPlan, newUserPlan);
     });

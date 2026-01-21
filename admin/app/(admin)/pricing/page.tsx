@@ -78,6 +78,20 @@ export default function PricingPage() {
       .catch((err) => setError(err.message));
   }, []);
 
+  const sortedPlans = useMemo(() => {
+    // Planları sırala: Free, Pro, Premium (Pro ortada olsun)
+    const planOrder = ['free_tier', 'pro_tier', 'premium_tier'];
+    return [...plans].sort((a, b) => {
+      const aIndex = planOrder.indexOf(a.code);
+      const bIndex = planOrder.indexOf(b.code);
+      // Eğer plan order'da yoksa en sona koy
+      if (aIndex === -1 && bIndex === -1) return 0;
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+  }, [plans]);
+
   const limitMap = useMemo(() => {
     const map = new Map<string, PlanLimit>();
     planLimits.forEach((limit) => {
@@ -244,7 +258,7 @@ export default function PricingPage() {
           <thead>
             <tr>
               <th>Feature</th>
-              {plans.map((plan) => (
+              {sortedPlans.map((plan) => (
                 <th key={plan.id}>{plan.name}</th>
               ))}
             </tr>
@@ -253,7 +267,7 @@ export default function PricingPage() {
             {features.map((feature) => (
               <tr key={feature.id}>
                 <td>{feature.key}</td>
-                {plans.map((plan) => {
+                {sortedPlans.map((plan) => {
                   const key = `${plan.id}-${feature.id}`;
                   const limit = limitMap.get(key);
                   const value =
@@ -677,7 +691,7 @@ export default function PricingPage() {
           <thead>
             <tr>
               <th>Feature</th>
-              {plans.map((plan) => (
+              {sortedPlans.map((plan) => (
                 <th key={plan.id}>{plan.name}</th>
               ))}
             </tr>
@@ -686,7 +700,7 @@ export default function PricingPage() {
             {features.map((feature) => (
               <tr key={feature.id}>
                 <td>{feature.key}</td>
-                {plans.map((plan) => {
+                {sortedPlans.map((plan) => {
                   const key = `${plan.id}-${feature.id}`;
                   const limit = editedLimits[key] ?? limitMap.get(key) ?? createDefaultLimit(plan, feature);
                   if (!limit) {

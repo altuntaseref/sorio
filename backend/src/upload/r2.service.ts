@@ -144,4 +144,18 @@ export class R2Service {
 
     return signedUrl;
   }
+
+  /**
+   * Text içeriğini R2'ye yükler
+   */
+  async uploadText(
+    key: string,
+    text: string,
+    contentType: string = 'text/plain',
+  ): Promise<{ key: string; url: string }> {
+    const buffer = Buffer.from(text, 'utf-8');
+    const url = await this.uploadBuffer(buffer, key, contentType, 31536000); // 1 yıl geçerli
+
+    return { key, url };
+  }
 }

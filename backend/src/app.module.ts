@@ -23,6 +23,7 @@ import { MockExamsModule } from './mock-exams/mock-exams.module';
 import { PricingModule } from './pricing/pricing.module';
 import { AdminModule } from './admin/admin.module';
 import { LegalModule } from './legal/legal.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -58,6 +59,7 @@ import { APP_GUARD } from '@nestjs/core';
     PricingModule,
     AdminModule,
     LegalModule,
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [
