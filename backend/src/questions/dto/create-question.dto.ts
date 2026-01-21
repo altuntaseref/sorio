@@ -5,6 +5,7 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  IsBoolean,
 } from 'class-validator';
 
 export enum CorrectAnswer {
@@ -55,6 +56,10 @@ export class CreateQuestionDto {
   @IsOptional()
   @IsString()
   aiSolution?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isAiSolved?: boolean;
 
   @IsOptional()
   @IsString()

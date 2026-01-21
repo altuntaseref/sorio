@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsIn, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsUUID, IsBoolean } from 'class-validator';
 
 export class UpdateQuestionDto {
   @IsOptional()
@@ -32,6 +32,10 @@ export class UpdateQuestionDto {
   @IsOptional()
   @IsString()
   aiSolution?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isAiSolved?: boolean;
 
   @IsOptional()
   @IsUUID()

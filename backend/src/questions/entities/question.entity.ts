@@ -54,6 +54,9 @@ export class Question {
   @Column({ name: 'ai_solution', type: 'text', nullable: true })
   aiSolution: string;
 
+  @Column({ name: 'is_ai_solved', type: 'boolean', default: false })
+  isAiSolved: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
