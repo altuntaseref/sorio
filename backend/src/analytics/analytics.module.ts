@@ -54,5 +54,6 @@ import { User } from '../users/entities/user.entity';
     DetailedAnalysisStorageService,
     WeeklyAnalysisSchedulerService,
   ],
+  exports: [WeeklyAnalysisSchedulerService],
 })
 export class AnalyticsModule {}

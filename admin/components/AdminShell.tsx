@@ -18,6 +18,7 @@ export default function AdminShell({ children }: PropsWithChildren) {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/users', label: 'Users' },
+    { href: '/templates', label: 'Templates' },
   ];
 
   return (

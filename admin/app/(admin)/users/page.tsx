@@ -61,6 +61,21 @@ export default function UsersPage() {
     fetchUsers();
   };
 
+  const deleteUser = async (userId: string, email: string) => {
+    if (!confirm(`"${email}" adresli kullanıcıyı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!`)) {
+      return;
+    }
+    
+    try {
+      await apiFetch(`/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message || 'Kullanıcı silinirken bir hata oluştu');
+    }
+  };
+
   return (
     <div className="card">
       <div className="row" style={{ justifyContent: 'space-between', marginBottom: 16 }}>
@@ -117,9 +132,18 @@ export default function UsersPage() {
               <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : '-'}</td>
               <td>{new Date(user.createdAt).toLocaleDateString()}</td>
               <td>
-                <Link className="button secondary" href={`/users/${user.id}`}>
-                  Detay
-                </Link>
+                <div className="row" style={{ gap: 8 }}>
+                  <Link className="button secondary" href={`/users/${user.id}`}>
+                    Detay
+                  </Link>
+                  <button
+                    className="button danger"
+                    onClick={() => deleteUser(user.id, user.email)}
+                    style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }}
+                  >
+                    Sil
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

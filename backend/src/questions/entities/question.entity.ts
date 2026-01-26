@@ -63,7 +63,7 @@ export class Question {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.questions)
+  @ManyToOne(() => User, (user) => user.questions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 

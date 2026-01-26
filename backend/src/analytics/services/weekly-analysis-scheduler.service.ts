@@ -23,12 +23,14 @@ export class WeeklyAnalysisSchedulerService {
   ) {}
 
   /**
-   * Her Pazartesi sabahı 09:00'da çalışır
-   * Önceki hafta için tüm premium kullanıcıların analizini oluşturur
+   * Her Pazartesi gece yarısı (00:00) çalışır
+   * Önceki hafta için tüm Pro ve Premium kullanıcıların analizini oluşturur
+   * - Pro kullanıcılar için: Sadece GENEL analiz
+   * - Premium kullanıcılar için: GENEL, SORULAR, ZAMAN, DENEMELER analizleri
    */
-  @Cron('0 9 * * 1') // Her Pazartesi 09:00
+  @Cron('0 0 * * 1') // Her Pazartesi gece yarısı (00:00)
   async generateWeeklyAnalyses() {
-    this.logger.log('Starting weekly analysis generation for premium users...');
+    this.logger.log('Starting weekly analysis generation for Pro and Premium users...');
 
     try {
       // Pro ve Premium plan kodlarını bul
@@ -57,7 +59,7 @@ export class WeeklyAnalysisSchedulerService {
 
       const userIds = [...new Set(activeUsers.map((up) => up.userId))];
 
-      this.logger.log(`Found ${userIds.length} premium users for analysis`);
+      this.logger.log(`Found ${userIds.length} Pro and Premium users for analysis`);
 
       // Bu hafta için analiz oluştur
       const now = new Date();
@@ -152,6 +154,50 @@ export class WeeklyAnalysisSchedulerService {
     } catch (error) {
       this.logger.error(
         `Error generating analysis for user ${userId}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Paket yükseltme sonrası kullanıcı için analiz oluştur
+   * Sadece Pro veya Premium plana geçişte çalışır
+   * Önceki hafta için analiz oluşturur
+   */
+  async generateAnalysisForUserOnUpgrade(userId: string): Promise<void> {
+    try {
+      // Kullanıcının aktif planını kontrol et
+      const { plan } = await this.pricingUsageService.getActivePlan(userId);
+      const isPro = plan.code === 'pro_tier';
+      const isPremium = plan.code === 'premium_tier';
+
+      // Sadece Pro veya Premium kullanıcılar için analiz oluştur
+      if (!isPro && !isPremium) {
+        this.logger.log(
+          `User ${userId} is not on Pro or Premium plan. Skipping analysis generation.`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `Generating analysis for upgraded user ${userId} (Plan: ${plan.code})`,
+      );
+
+      // Önceki hafta için analiz oluştur
+      const now = new Date();
+      const weekStart = this.getWeekStart(now);
+      weekStart.setDate(weekStart.getDate() - 7); // Önceki hafta
+      weekStart.setHours(0, 0, 0, 0);
+
+      // Analiz oluştur (generateAnalysisForUser zaten tüm kontrolleri yapıyor)
+      await this.generateAnalysisForUser(userId, weekStart);
+
+      this.logger.log(
+        `Analysis generation completed for upgraded user ${userId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error generating analysis for upgraded user ${userId}`,
         error,
       );
     }

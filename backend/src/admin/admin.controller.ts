@@ -44,6 +44,33 @@ export class AdminController {
     return { data };
   }
 
+  @Delete('users/:id')
+  async deleteUser(@Param('id') userId: string) {
+    await this.adminService.deleteUser(userId);
+    return { success: true, message: 'User deleted successfully' };
+  }
+
+  @Get('users/:id/analyses')
+  async getUserAnalyses(@Param('id') userId: string) {
+    const data = await this.adminService.getUserAnalyses(userId);
+    return { data };
+  }
+
+  @Delete('users/:id/analyses/:analysisId')
+  async deleteUserAnalysis(
+    @Param('id') userId: string,
+    @Param('analysisId') analysisId: string,
+  ) {
+    await this.adminService.deleteUserAnalysis(userId, analysisId);
+    return { success: true, message: 'Analysis deleted successfully' };
+  }
+
+  @Post('users/:id/trigger-analysis')
+  async triggerAnalysisForUser(@Param('id') userId: string) {
+    await this.adminService.triggerAnalysisForUser(userId);
+    return { success: true, message: 'Analysis generation triggered successfully' };
+  }
+
   @Get('plans')
   async getPlans() {
     const data = await this.adminService.getPlans();

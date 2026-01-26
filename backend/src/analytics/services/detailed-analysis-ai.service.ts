@@ -146,28 +146,46 @@ export class DetailedAnalysisAiService {
           {
             role: 'user',
             content: weeklyComparison
-              ? `Aşağıda öğrencinin bu hafta ve önceki hafta çalışma verileri JSON formatında verilmiştir. Bu verileri karşılaştırarak detaylıca analiz et ve MUTLAKA JSON formatında rapor hazırla.
+              ? `Aşağıda öğrencinin bu hafta ve önceki hafta çalışma verileri JSON formatında verilmiştir. Bu verileri karşılaştırarak detaylıca analiz et ve MUTLAKA aşağıdaki JSON formatında rapor hazırla.
+
+KRİTİK: Response'un MUTLAKA şu 4 alanı içermesi gerekiyor:
+{
+  "general": "...",      // GENEL analizi (500-700 kelime)
+  "questions": "...",    // SORULAR analizi (200-300 kelime) - SORU ÇÖZME ile ilgili her şey
+  "time": "...",        // ZAMAN analizi (200-300 kelime) - ÇALIŞMA SÜRELERİ ile ilgili her şey
+  "mockExams": "..."    // DENEMELER analizi (200-300 kelime) - DENEME SINAVLARI ile ilgili her şey
+}
 
 ÖNEMLİ: 
 - Önceki hafta verileri ile bu hafta verilerini karşılaştır.
 - Gelişim trendlerini, artış/azalışları, iyileşme alanlarını belirle.
 ${analysisInstruction}
 - Veri yoksa mevcut verilerle analiz yap ve eksiklikleri belirt.
+- TÜM 4 ALANI MUTLAKA DOLDUR. Hiçbir alan boş kalmamalı.
 
 ÖĞRENCİ VERİLERİ (Bu Hafta ve Önceki Hafta):
 ${JSON.stringify(optimizedData, null, 2)}${scenarioInfo}${userInfo}
 
-Lütfen bu verileri analiz edip JSON formatında performans raporu hazırla.`
-              : `Aşağıda öğrencinin tüm çalışma verileri JSON formatında verilmiştir. Bu verileri detaylıca analiz et ve MUTLAKA JSON formatında rapor hazırla.
+Lütfen bu verileri analiz edip YUKARIDAKİ JSON FORMATINDA (4 alan: general, questions, time, mockExams) performans raporu hazırla.`
+              : `Aşağıda öğrencinin tüm çalışma verileri JSON formatında verilmiştir. Bu verileri detaylıca analiz et ve MUTLAKA aşağıdaki JSON formatında rapor hazırla.
+
+KRİTİK: Response'un MUTLAKA şu 4 alanı içermesi gerekiyor:
+{
+  "general": "...",      // GENEL analizi (500-700 kelime)
+  "questions": "...",    // SORULAR analizi (200-300 kelime) - SORU ÇÖZME ile ilgili her şey
+  "time": "...",        // ZAMAN analizi (200-300 kelime) - ÇALIŞMA SÜRELERİ ile ilgili her şey
+  "mockExams": "..."    // DENEMELER analizi (200-300 kelime) - DENEME SINAVLARI ile ilgili her şey
+}
 
 ÖNEMLİ:
 ${analysisInstruction}
 - Veri yoksa mevcut verilerle analiz yap ve eksiklikleri belirt.
+- TÜM 4 ALANI MUTLAKA DOLDUR. Hiçbir alan boş kalmamalı.
 
 ÖĞRENCİ VERİLERİ:
 ${JSON.stringify(optimizedData, null, 2)}${scenarioInfo}${userInfo}
 
-Lütfen bu verileri analiz edip JSON formatında performans raporu hazırla.`,
+Lütfen bu verileri analiz edip YUKARIDAKİ JSON FORMATINDA (4 alan: general, questions, time, mockExams) performans raporu hazırla.`,
           },
         ],
         response_format: { type: 'json_object' }, // JSON mode
@@ -200,15 +218,64 @@ Lütfen bu verileri analiz edip JSON formatında performans raporu hazırla.`,
 
       let analysisText = data.choices[0].message.content;
 
+      // AI'dan gelen response'u log'la (ilk 500 karakter)
+      this.logger.log('AI response (first 500 chars):', analysisText.substring(0, 500));
+
       // JSON parse et
       let analysis: WeeklyAnalysisResponseDto;
       try {
         // Eğer markdown code block içindeyse temizle
         analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        analysis = JSON.parse(analysisText);
+        const parsed = JSON.parse(analysisText);
+        
+        // Parse edilen objeyi log'la
+        this.logger.log('Parsed JSON keys:', Object.keys(parsed));
+        
+        // Response formatını kontrol et ve düzelt
+        analysis = {
+          general: parsed.general || parsed.summary || '',
+          questions: parsed.questions || '',
+          time: parsed.time || '',
+          mockExams: parsed.mockExams || '',
+        };
+
+        // Eğer categories objesi varsa, ondan al
+        if (parsed.categories && typeof parsed.categories === 'object') {
+          analysis.questions = parsed.categories.questions || analysis.questions || '';
+          analysis.time = parsed.categories.time || analysis.time || '';
+          analysis.mockExams = parsed.categories.mockExams || analysis.mockExams || '';
+        }
+
+        this.logger.log('Final analysis structure:', {
+          hasGeneral: !!analysis.general,
+          generalLength: analysis.general?.length || 0,
+          hasQuestions: !!analysis.questions,
+          questionsLength: analysis.questions?.length || 0,
+          hasTime: !!analysis.time,
+          timeLength: analysis.time?.length || 0,
+          hasMockExams: !!analysis.mockExams,
+          mockExamsLength: analysis.mockExams?.length || 0,
+        });
+
+        // Eğer sadece general varsa ve diğerleri boşsa, uyarı ver
+        if (analysis.general && !analysis.questions && !analysis.time && !analysis.mockExams) {
+          this.logger.warn('AI returned only general analysis. Other fields are empty. This may indicate the AI did not follow the format.');
+          // Eğer isPremium ise, boş alanlar için teşvik edici mesajlar ekle
+          if (isPremium) {
+            if (!analysis.questions || analysis.questions.trim() === '') {
+              analysis.questions = 'Henüz yeterli soru çözme verisi toplayamadık. Daha fazla soru çözdükçe bu analiz daha detaylı olacak. Hadi başlayalım!';
+            }
+            if (!analysis.time || analysis.time.trim() === '') {
+              analysis.time = 'Henüz yeterli çalışma süresi verisi toplayamadık. Düzenli çalışma yaptıkça zaman analizlerin daha anlamlı hale gelecek.';
+            }
+            if (!analysis.mockExams || analysis.mockExams.trim() === '') {
+              analysis.mockExams = 'Henüz deneme sınavı kaydedilmemiş. Deneme sınavı sonuçlarını kaydettikçe sınav performansını daha iyi analiz edebiliriz.';
+            }
+          }
+        }
       } catch (parseError) {
         this.logger.error('Failed to parse AI response as JSON', parseError);
-        this.logger.error('Response content:', analysisText);
+        this.logger.error('Response content:', analysisText.substring(0, 500));
         // Fallback: Eski format
         analysis = {
           general: this.cleanMarkdown(analysisText),
@@ -238,6 +305,12 @@ Lütfen bu verileri analiz edip JSON formatında performans raporu hazırla.`,
         analysis.time = '';
         analysis.mockExams = '';
       }
+
+      // Tüm alanların string olduğundan emin ol
+      analysis.general = analysis.general || '';
+      analysis.questions = analysis.questions || '';
+      analysis.time = analysis.time || '';
+      analysis.mockExams = analysis.mockExams || '';
 
       this.logger.log(`Analysis generated successfully for user ${userId}`);
       return { analysis, dataSummary, scenario };

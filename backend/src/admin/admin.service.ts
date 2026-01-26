@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
@@ -10,13 +10,17 @@ import { UserPlan } from '../pricing/entities/user-plan.entity';
 import { Question } from '../questions/entities/question.entity';
 import { QuizSession } from '../quizzes/entities/quiz-session.entity';
 import { MockExam } from '../mock-exams/entities/mock-exam.entity';
+import { UserAnalysis } from '../analytics/entities/user-analysis.entity';
 import { CreatePlanDto, UpdatePlanDto, UpdateUserPlanDto } from './dto/plan.dto';
 import { CreateFeatureDto, UpdateFeatureDto } from './dto/feature.dto';
 import { UpdatePlanLimitDto } from './dto/plan-limit.dto';
 import { PricingService } from '../pricing/pricing.service';
+import { WeeklyAnalysisSchedulerService } from '../analytics/services/weekly-analysis-scheduler.service';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -36,8 +40,12 @@ export class AdminService {
     private quizSessionRepository: Repository<QuizSession>,
     @InjectRepository(MockExam)
     private mockExamRepository: Repository<MockExam>,
+    @InjectRepository(UserAnalysis)
+    private userAnalysisRepository: Repository<UserAnalysis>,
     private dataSource: DataSource,
     private pricingService: PricingService,
+    @Inject(forwardRef(() => WeeklyAnalysisSchedulerService))
+    private weeklyAnalysisSchedulerService: WeeklyAnalysisSchedulerService,
   ) {}
 
   async getDashboardStats() {
@@ -377,6 +385,72 @@ export class AdminService {
       await manager.save(UserPlan, newUserPlan);
     });
 
+    // Pro veya Premium plana geçişte analiz oluştur
+    if (plan.code === 'pro_tier' || plan.code === 'premium_tier') {
+      // Background'da çalıştır (await etme, hata olursa log'la)
+      this.weeklyAnalysisSchedulerService
+        .generateAnalysisForUserOnUpgrade(userId)
+        .catch((error) => {
+          this.logger.error(
+            `Failed to generate analysis for upgraded user ${userId}`,
+            error,
+          );
+        });
+    }
+
     return { success: true };
+  }
+
+  async deleteUser(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // User entity'sinde CASCADE delete tanımlı olduğu için
+    // ilgili tüm kayıtlar otomatik silinecek
+    await this.userRepository.remove(user);
+    
+    return { success: true };
+  }
+
+  async deleteUserAnalysis(userId: string, analysisId: string) {
+    const analysis = await this.userAnalysisRepository.findOne({
+      where: { id: analysisId, userId },
+    });
+
+    if (!analysis) {
+      throw new NotFoundException('Analysis not found');
+    }
+
+    await this.userAnalysisRepository.remove(analysis);
+    
+    return { success: true, message: 'Analysis deleted successfully' };
+  }
+
+  async getUserAnalyses(userId: string) {
+    const analyses = await this.userAnalysisRepository.find({
+      where: { userId },
+      order: { weekStart: 'DESC' },
+    });
+
+    return analyses.map((a) => ({
+      id: a.id,
+      weekStart: a.weekStart instanceof Date ? a.weekStart.toISOString().split('T')[0] : a.weekStart,
+      weekEnd: a.weekEnd instanceof Date ? a.weekEnd.toISOString().split('T')[0] : a.weekEnd,
+      createdAt: a.createdAt,
+    }));
+  }
+
+  async triggerAnalysisForUser(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Job'u tetikle (background'da çalışır)
+    await this.weeklyAnalysisSchedulerService.generateAnalysisForUserOnUpgrade(userId);
+    
+    return { success: true, message: 'Analysis generation triggered successfully' };
   }
 }

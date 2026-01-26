@@ -13,7 +13,9 @@ import { UserUsage } from '../pricing/entities/user-usage.entity';
 import { Question } from '../questions/entities/question.entity';
 import { QuizSession } from '../quizzes/entities/quiz-session.entity';
 import { MockExam } from '../mock-exams/entities/mock-exam.entity';
+import { UserAnalysis } from '../analytics/entities/user-analysis.entity';
 import { PricingModule } from '../pricing/pricing.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
@@ -28,8 +30,10 @@ import { PricingModule } from '../pricing/pricing.module';
       Question,
       QuizSession,
       MockExam,
+      UserAnalysis,
     ]),
     PricingModule,
+    AnalyticsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminTokenGuard],

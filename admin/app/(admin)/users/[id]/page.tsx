@@ -52,6 +52,13 @@ type UserDetail = {
   };
 };
 
+type Analysis = {
+  id: string;
+  weekStart: string;
+  weekEnd: string;
+  createdAt: string;
+};
+
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
   const userId = params.id;
@@ -59,6 +66,13 @@ export default function UserDetailPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [error, setError] = useState('');
+  const [analyses, setAnalyses] = useState<Analysis[]>([]);
+
+  const fetchAnalyses = () => {
+    apiFetch<Analysis[]>(`/admin/users/${userId}/analyses`)
+      .then((data) => setAnalyses(data))
+      .catch((err) => console.error('Failed to fetch analyses:', err));
+  };
 
   useEffect(() => {
     Promise.all([
@@ -71,7 +85,24 @@ export default function UserDetailPage() {
         setSelectedPlan(detailData.pricing.activePlan?.id ?? '');
       })
       .catch((err) => setError(err.message));
+    
+    fetchAnalyses();
   }, [userId]);
+
+  const deleteAnalysis = async (analysisId: string) => {
+    if (!confirm('Bu analizi silmek istediğinize emin misiniz?')) {
+      return;
+    }
+    
+    try {
+      await apiFetch(`/admin/users/${userId}/analyses/${analysisId}`, {
+        method: 'DELETE',
+      });
+      fetchAnalyses();
+    } catch (err: any) {
+      setError(err.message || 'Analiz silinirken bir hata oluştu');
+    }
+  };
 
   const updatePlan = async () => {
     await apiFetch(`/admin/users/${userId}/plan`, {
@@ -201,6 +232,68 @@ export default function UserDetailPage() {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="card">
+        <div className="page-title" style={{ marginBottom: 12 }}>
+          Haftalık Analizler (Test İçin)
+        </div>
+        <div className="muted" style={{ marginBottom: 16 }}>
+          Test için mevcut analizleri silebilir veya yeni analiz oluşturabilirsiniz.
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <button
+            className="button"
+            onClick={async () => {
+              try {
+                await apiFetch(`/admin/users/${userId}/trigger-analysis`, {
+                  method: 'POST',
+                });
+                alert('Analiz oluşturma işlemi başlatıldı. Lütfen birkaç saniye bekleyip sayfayı yenileyin.');
+                setTimeout(() => {
+                  fetchAnalyses();
+                }, 3000);
+              } catch (err: any) {
+                setError(err.message || 'Analiz oluşturulurken bir hata oluştu');
+              }
+            }}
+            style={{ marginRight: 8 }}
+          >
+            Analiz Oluştur (Job Tetikle)
+          </button>
+        </div>
+        {analyses.length === 0 ? (
+          <div className="muted">Henüz analiz bulunmuyor.</div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Hafta Başlangıç</th>
+                <th>Hafta Bitiş</th>
+                <th>Oluşturulma</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {analyses.map((analysis) => (
+                <tr key={analysis.id}>
+                  <td>{analysis.weekStart}</td>
+                  <td>{analysis.weekEnd}</td>
+                  <td>{new Date(analysis.createdAt).toLocaleString()}</td>
+                  <td>
+                    <button
+                      className="button danger"
+                      onClick={() => deleteAnalysis(analysis.id)}
+                      style={{ backgroundColor: '#dc3545', color: 'white', border: 'none' }}
+                    >
+                      Sil
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

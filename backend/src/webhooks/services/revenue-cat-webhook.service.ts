@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository, In } from 'typeorm';
@@ -14,6 +16,7 @@ import {
   RevenueCatWebhookDto,
   RevenueCatEventType,
 } from '../dto/revenue-cat-webhook.dto';
+import { WeeklyAnalysisSchedulerService } from '../../analytics/services/weekly-analysis-scheduler.service';
 
 @Injectable()
 export class RevenueCatWebhookService {
@@ -29,6 +32,8 @@ export class RevenueCatWebhookService {
     @InjectRepository(UserUsage)
     private userUsageRepository: Repository<UserUsage>,
     private dataSource: DataSource,
+    @Inject(forwardRef(() => WeeklyAnalysisSchedulerService))
+    private weeklyAnalysisSchedulerService: WeeklyAnalysisSchedulerService,
   ) {}
 
   async handleWebhook(webhookDto: RevenueCatWebhookDto): Promise<void> {
@@ -134,6 +139,19 @@ export class RevenueCatWebhookService {
     this.logger.log(
       `Initial purchase processed: User ${user.id} -> Plan ${plan.code}`,
     );
+
+    // Pro veya Premium plana geçişte analiz oluştur
+    if (plan.code === 'pro_tier' || plan.code === 'premium_tier') {
+      // Background'da çalıştır (await etme, hata olursa log'la)
+      this.weeklyAnalysisSchedulerService
+        .generateAnalysisForUserOnUpgrade(user.id)
+        .catch((error) => {
+          this.logger.error(
+            `Failed to generate analysis for upgraded user ${user.id}`,
+            error,
+          );
+        });
+    }
   }
 
   private async handleRenewal(
