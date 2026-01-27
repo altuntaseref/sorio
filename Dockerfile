@@ -21,12 +21,12 @@ RUN echo "Starting build process..." && \
     npm run build && \
     echo "Build completed. Checking output..." && \
     echo "--- Contents of /app/dist ---" && \
-    find /app/dist -type f -name "*.js" | head -20 && \
+    ls -la /app/dist/ && \
     echo "--- Looking for main.js ---" && \
     find /app/dist -name "main.js" && \
-    echo "--- Fixing main.js location if needed ---" && \
-    (test -f /app/dist/src/main.js && (cp /app/dist/src/main.js /app/dist/main.js && echo "✅ Copied dist/src/main.js to dist/main.js") || echo "⚠️  dist/src/main.js not found") && \
-    (test -f /app/dist/main.js && echo "✅ dist/main.js exists" || (echo "❌ dist/main.js not found" && exit 1))
+    echo "--- Verifying build structure ---" && \
+    (test -f /app/dist/src/main.js && echo "✅ dist/src/main.js exists" || (echo "❌ dist/src/main.js not found" && exit 1)) && \
+    (test -f /app/dist/src/app.module.js && echo "✅ dist/src/app.module.js exists" || echo "⚠️  dist/src/app.module.js not found")
 
 # Production stage
 FROM node:20-alpine AS production
@@ -50,8 +50,9 @@ COPY --from=builder /app/tsconfig.json ./
 RUN echo "Verifying copied files in production stage..." && \
     ls -la /app/ && \
     ls -la /app/dist/ && \
-    ls -la /app/dist/main.js && \
-    echo "✅ Production stage verification successful - dist/main.js exists"
+    (test -f /app/dist/src/main.js && echo "✅ dist/src/main.js exists" || (echo "❌ dist/src/main.js not found" && exit 1)) && \
+    (test -f /app/dist/src/app.module.js && echo "✅ dist/src/app.module.js exists" || echo "⚠️  dist/src/app.module.js not found") && \
+    echo "✅ Production stage verification successful - dist/src/main.js exists"
 
 EXPOSE 3000
 
@@ -60,4 +61,5 @@ ENV RUN_MIGRATIONS=true
 ENV NODE_ENV=production
 
 # Start the application (migrations will run automatically in main.ts)
-CMD node dist/main.js
+# Note: NestJS builds to dist/src/, so we use dist/src/main.js
+CMD node dist/src/main.js
