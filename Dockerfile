@@ -17,12 +17,13 @@ COPY backend/typeorm.config.ts ./
 COPY backend/tsconfig.json ./
 
 # Build the application
-RUN npm run build
-
-# Verify build output
-RUN ls -la /app/dist/ || (echo "ERROR: dist directory not found" && exit 1)
-RUN ls -la /app/dist/main.js || (echo "ERROR: dist/main.js not found" && exit 1)
-RUN echo "Build verification successful - dist/main.js exists"
+RUN echo "Starting build process..." && \
+    npm run build && \
+    echo "Build completed. Checking output..." && \
+    ls -la /app/ && \
+    ls -la /app/dist/ && \
+    ls -la /app/dist/main.js && \
+    echo "✅ Build verification successful - dist/main.js exists"
 
 # Production stage
 FROM node:20-alpine AS production
@@ -36,14 +37,18 @@ COPY backend/package*.json ./
 RUN npm ci --only=production
 
 # Copy built application from builder
+RUN echo "Copying files from builder stage..." && \
+    ls -la /app/ || echo "App directory exists"
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/typeorm.config.ts ./
 COPY --from=builder /app/tsconfig.json ./
 
 # Verify copied files
-RUN ls -la /app/dist/ || (echo "ERROR: dist directory not found in production stage" && exit 1)
-RUN ls -la /app/dist/main.js || (echo "ERROR: dist/main.js not found in production stage" && exit 1)
-RUN echo "Production stage verification successful - dist/main.js exists"
+RUN echo "Verifying copied files in production stage..." && \
+    ls -la /app/ && \
+    ls -la /app/dist/ && \
+    ls -la /app/dist/main.js && \
+    echo "✅ Production stage verification successful - dist/main.js exists"
 
 EXPOSE 3000
 
