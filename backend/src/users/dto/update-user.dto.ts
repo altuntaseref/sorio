@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -11,7 +11,11 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  avatarUrl?: string;
+  avatarUrl?: string; // Deprecated: Artık avatarId kullanılacak
+
+  @IsOptional()
+  @IsUUID()
+  avatarId?: string; // Avatar ID
 
   @IsOptional()
   @IsString()

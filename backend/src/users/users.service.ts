@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ExamsService } from '../exams/exams.service';
 import { UserExamTarget } from '../mock-exams/entities/user-exam-target.entity';
+import { AvatarsService } from '../avatars/avatars.service';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     private userExamTargetRepository: Repository<UserExamTarget>,
     private dataSource: DataSource,
     private examsService: ExamsService,
+    private avatarsService: AvatarsService,
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
@@ -144,6 +146,17 @@ export class UsersService {
       user.avatarUrl = updateDto.avatarUrl;
     }
 
+    if (typeof updateDto.avatarId !== 'undefined') {
+      // Avatar'ın var olup olmadığını ve aktif olup olmadığını kontrol et
+      if (updateDto.avatarId) {
+        const avatar = await this.avatarsService.getAvatarById(updateDto.avatarId);
+        if (!avatar.isActive) {
+          throw new BadRequestException('Selected avatar is not active');
+        }
+      }
+      user.avatarId = updateDto.avatarId;
+    }
+
     if (typeof updateDto.examTarget !== 'undefined') {
       // Exam code'un geçerli olup olmadığını kontrol et
       if (updateDto.examTarget) {
@@ -161,6 +174,60 @@ export class UsersService {
     }
 
     return this.usersRepository.save(user);
+  }
+
+  /**
+   * Kullanıcıyı avatar bilgisi ile birlikte getir
+   */
+  async getUserWithAvatar(userId: string): Promise<User & { avatar?: { id: string; imageUrl: string; videoUrl?: string; name: string } }> {
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let avatar: { id: string; imageUrl: string; videoUrl?: string; name: string } | null = null;
+    if (user.avatarId) {
+      try {
+        const avatarEntity = await this.avatarsService.getAvatarById(user.avatarId);
+        avatar = {
+          id: avatarEntity.id,
+          imageUrl: avatarEntity.imageUrl,
+          videoUrl: avatarEntity.videoUrl,
+          name: avatarEntity.name,
+        };
+      } catch (error) {
+        // Avatar bulunamazsa null kalır
+        avatar = null;
+      }
+    }
+
+    return {
+      ...user,
+      avatar: avatar || undefined,
+    };
+  }
+
+  /**
+   * Kullanıcının avatar'ını seçer
+   */
+  async selectAvatar(userId: string, avatarId: string): Promise<User> {
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Avatar'ın var olup olmadığını ve aktif olup olmadığını kontrol et
+    const avatar = await this.avatarsService.getAvatarById(avatarId);
+    if (!avatar.isActive) {
+      throw new BadRequestException('Selected avatar is not active');
+    }
+
+    user.avatarId = avatarId;
+    const savedUser = await this.usersRepository.save(user);
+    
+    // Avatar bilgisini de döndür
+    const userWithAvatar = await this.getUserWithAvatar(userId);
+    return savedUser;
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {

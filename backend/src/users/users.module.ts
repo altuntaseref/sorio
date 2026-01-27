@@ -5,11 +5,13 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { ExamsModule } from '../exams/exams.module';
 import { UserExamTarget } from '../mock-exams/entities/user-exam-target.entity';
+import { AvatarsModule } from '../avatars/avatars.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserExamTarget]),
     ExamsModule,
+    AvatarsModule,
   ],
   providers: [UsersService],
   controllers: [UsersController],

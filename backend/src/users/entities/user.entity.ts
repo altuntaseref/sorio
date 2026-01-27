@@ -45,7 +45,13 @@ export class User {
     name: 'avatar_url',
     nullable: true,
   })
-  avatarUrl?: string;
+  avatarUrl?: string; // Deprecated: Artık avatarId kullanılacak
+
+  @Column({
+    name: 'avatar_id',
+    nullable: true,
+  })
+  avatarId?: string; // Avatar ID (FK to avatars table)
 
   @Column({
     name: 'exam_target',

@@ -25,6 +25,7 @@ import { AdminModule } from './admin/admin.module';
 import { LegalModule } from './legal/legal.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { TemplatesModule } from './templates/templates.module';
+import { AvatarsModule } from './avatars/avatars.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -62,6 +63,7 @@ import { APP_GUARD } from '@nestjs/core';
     LegalModule,
     WebhooksModule,
     TemplatesModule,
+    AvatarsModule,
   ],
   controllers: [AppController],
   providers: [

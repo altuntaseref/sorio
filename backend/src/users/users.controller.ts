@@ -5,6 +5,7 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { SelectAvatarDto } from '../avatars/dto/select-avatar.dto';
 
 @Controller('users')
 export class UsersController {
@@ -12,9 +13,10 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getProfile(@GetUser() user: User) {
-    delete user.password;
-    return user;
+  async getProfile(@GetUser() user: User) {
+    const userWithAvatar = await this.usersService.getUserWithAvatar(user.id);
+    delete userWithAvatar.password;
+    return userWithAvatar;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -48,6 +50,28 @@ export class UsersController {
     return {
       success: true,
       message: 'Password updated successfully.',
+    };
+  }
+
+  /**
+   * Avatar seç
+   * PATCH /api/users/me/avatar
+   */
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/avatar')
+  async selectAvatar(
+    @GetUser() user: User,
+    @Body() selectAvatarDto: SelectAvatarDto,
+  ) {
+    const updatedUser = await this.usersService.selectAvatar(
+      user.id,
+      selectAvatarDto.avatarId,
+    );
+    delete updatedUser.password;
+    return {
+      success: true,
+      message: 'Avatar selected successfully',
+      data: updatedUser,
     };
   }
 
