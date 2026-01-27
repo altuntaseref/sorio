@@ -6,4 +6,13 @@ export class AppController {
   healthCheck(): object {
     return { status: 'ok', message: 'pong' };
   }
+
+  @Get('health')
+  health(): object {
+    return { 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    };
+  }
 }
