@@ -20,10 +20,13 @@ COPY backend/tsconfig.json ./
 RUN echo "Starting build process..." && \
     npm run build && \
     echo "Build completed. Checking output..." && \
-    ls -la /app/ && \
-    ls -la /app/dist/ && \
-    ls -la /app/dist/main.js && \
-    echo "✅ Build verification successful - dist/main.js exists"
+    echo "--- Contents of /app/dist ---" && \
+    find /app/dist -type f -name "*.js" | head -20 && \
+    echo "--- Looking for main.js ---" && \
+    find /app/dist -name "main.js" && \
+    echo "--- Fixing main.js location if needed ---" && \
+    (test -f /app/dist/src/main.js && (cp /app/dist/src/main.js /app/dist/main.js && echo "✅ Copied dist/src/main.js to dist/main.js") || echo "⚠️  dist/src/main.js not found") && \
+    (test -f /app/dist/main.js && echo "✅ dist/main.js exists" || (echo "❌ dist/main.js not found" && exit 1))
 
 # Production stage
 FROM node:20-alpine AS production
