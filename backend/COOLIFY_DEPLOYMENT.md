@@ -43,9 +43,10 @@ Backend klasöründe `Dockerfile` mevcut. Coolify otomatik olarak bunu kullanaca
 
 ### 3. Build Settings
 
-- **Build Command**: `npm run build` (Dockerfile içinde zaten var)
-- **Start Command**: `npm run start:prod` (Dockerfile içinde zaten var)
+- **Build Pack**: Dockerfile
 - **Working Directory**: `backend`
+- **Build Command**: (Dockerfile otomatik yapar, boş bırakabilirsiniz)
+- **Start Command**: `node dist/main.js` (veya boş bırakın, Dockerfile'daki CMD kullanılır)
 
 ### 4. Migration'ları Çalıştır
 

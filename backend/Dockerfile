@@ -40,4 +40,5 @@ ENV RUN_MIGRATIONS=true
 ENV NODE_ENV=production
 
 # Start the application (migrations will run automatically in main.ts)
-CMD ["npm", "run", "start:prod"]
+# Coolify will use this as default, but you can override in Coolify settings
+CMD node dist/main.js
