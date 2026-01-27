@@ -385,8 +385,8 @@ export class AdminService {
       await manager.save(UserPlan, newUserPlan);
     });
 
-    // Pro veya Premium plana geçişte analiz oluştur
-    if (plan.code === 'pro_tier' || plan.code === 'premium_tier') {
+    // Pro plana geçişte analiz oluştur
+    if (plan.code === 'pro_tier') {
       // Background'da çalıştır (await etme, hata olursa log'la)
       this.weeklyAnalysisSchedulerService
         .generateAnalysisForUserOnUpgrade(userId)

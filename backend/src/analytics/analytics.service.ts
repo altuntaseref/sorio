@@ -31,103 +31,6 @@ export class AnalyticsService {
     return `${year}-${month}-${day}`;
   }
 
-  /**
-   * Veritabanından AI analizini getir (kategori bazlı)
-   * Plan kontrolü yapılır:
-   * - Free: Tüm kategoriler için null
-   * - Pro: Sadece 'general' kategorisi için analiz, diğerleri null
-   * - Premium: Tüm kategoriler için analiz
-   * @param userId Kullanıcı ID
-   * @param range Hafta/Ay/Tümü
-   * @param category Analiz kategorisi: 'general' | 'questions' | 'time' | 'mockExams'
-   * @returns Analiz metni veya null
-   */
-  private async getAiAnalysisForCategory(
-    userId: string,
-    range: 'week' | 'month' | 'all',
-    category: 'general' | 'questions' | 'time' | 'mockExams',
-  ): Promise<string | null> {
-    try {
-      // Plan kontrolü
-      const { plan } = await this.pricingUsageService.getActivePlan(userId);
-      const isFree = plan.code === 'free_tier';
-      const isPro = plan.code === 'pro_tier';
-      const isPremium = plan.code === 'premium_tier';
-
-      // Free kullanıcılar için analiz yok
-      if (isFree) {
-        return null;
-      }
-
-      // Pro kullanıcılar için sadece 'general' kategorisi
-      if (isPro && category !== 'general') {
-        return null;
-      }
-
-      // Premium kullanıcılar için tüm kategoriler, Pro için sadece general
-      // Range'e göre analiz haftasını belirle
-      let weekStart: Date | null = null;
-      
-      if (range === 'week') {
-        // Önceki hafta için analiz (job'un oluşturduğu)
-        const now = new Date();
-        const currentWeekStart = this.getWeekStart(now);
-        weekStart = new Date(currentWeekStart);
-        weekStart.setDate(weekStart.getDate() - 7); // Önceki hafta
-        weekStart.setHours(0, 0, 0, 0);
-      } else if (range === 'month') {
-        // Önceki ayın son haftası için analiz
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        weekStart = this.getWeekStart(firstDayOfMonth);
-        weekStart.setDate(weekStart.getDate() - 7); // Önceki ayın son haftası
-        weekStart.setHours(0, 0, 0, 0);
-      } else {
-        // 'all' için en son analizi getir
-        const latest = await this.analysisStorageService.getLatestAnalysis(userId);
-        if (!latest) return null;
-
-        let parsedAnalysis: any;
-        if (latest.categories && typeof latest.categories === 'object') {
-          parsedAnalysis = latest.categories;
-        } else {
-          try {
-            parsedAnalysis = JSON.parse(latest.analysisText);
-          } catch {
-            parsedAnalysis = { general: latest.summary || latest.analysisText || '' };
-          }
-        }
-
-        return parsedAnalysis[category] || null;
-      }
-
-      if (!weekStart) return null;
-
-      // Belirli hafta için analiz getir
-      const analysis = await this.analysisStorageService.getOrCheckAnalysisForWeek(
-        userId,
-        weekStart,
-      );
-
-      if (!analysis) return null;
-
-      // Analizi parse et
-      let parsedAnalysis: any;
-      if (analysis.categories && typeof analysis.categories === 'object') {
-        parsedAnalysis = analysis.categories;
-      } else {
-        try {
-          parsedAnalysis = JSON.parse(analysis.analysisText);
-        } catch {
-          parsedAnalysis = { general: analysis.summary || analysis.analysisText || '' };
-        }
-      }
-
-      return parsedAnalysis[category] || null;
-    } catch (error) {
-      return null;
-    }
-  }
 
   /**
    * Haftanın başlangıç gününü (Pazartesi) bulur
@@ -755,12 +658,12 @@ export class AnalyticsService {
       // If user doesn't have advanced_analytics, return limited data
       if (!hasAdvancedAnalytics) {
         // Free kullanıcılar için aiAnalysis null (helper metod zaten kontrol ediyor)
-        const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'general').catch(() => null);
+        const aiAnalysis = null; // AI servisi kaldırıldı
 
         return {
           period,
           isLimited: true,
-          upgradeMessage: 'Detaylı analizler için Pro veya Premium plana geçin',
+          upgradeMessage: 'Detaylı analizler için Pro plana geçin',
           totalProductivity: {
             totalStudyMinutes,
             studyDeltaPercent,
@@ -786,8 +689,8 @@ export class AnalyticsService {
       // Full analytics for advanced_analytics users
       const motivation = await this.motivationService.getMotivationForUser(userId);
 
-      // AI analizini getir (general kategorisi)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'general');
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -829,8 +732,8 @@ export class AnalyticsService {
         aiAnalysis: aiAnalysis || null,
       };
     } catch (error) {
-      // AI analizini getir (hata durumunda da deneyelim)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'general').catch(() => null);
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -1014,8 +917,8 @@ export class AnalyticsService {
         ),
       ]);
 
-      // AI analizini getir (questions kategorisi)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'questions');
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -1030,8 +933,8 @@ export class AnalyticsService {
         aiAnalysis: aiAnalysis || null,
       };
     } catch (error) {
-      // AI analizini getir (hata durumunda da deneyelim)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'questions').catch(() => null);
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -1208,8 +1111,8 @@ export class AnalyticsService {
         rangeParams,
       );
 
-      // AI analizini getir (time kategorisi)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'time');
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -1237,8 +1140,8 @@ export class AnalyticsService {
         aiAnalysis: aiAnalysis || null,
       };
     } catch (error) {
-      // AI analizini getir (hata durumunda da deneyelim)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'time').catch(() => null);
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -1473,8 +1376,8 @@ export class AnalyticsService {
         };
       });
 
-      // AI analizini getir (mockExams kategorisi)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'mockExams');
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,
@@ -1495,8 +1398,8 @@ export class AnalyticsService {
         aiAnalysis: aiAnalysis || null,
       };
     } catch (error) {
-      // AI analizini getir (hata durumunda da deneyelim)
-      const aiAnalysis = await this.getAiAnalysisForCategory(userId, range, 'mockExams').catch(() => null);
+      // AI servisi kaldırıldı
+      const aiAnalysis = null;
 
       return {
         period,

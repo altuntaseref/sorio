@@ -11,8 +11,6 @@ import { UploadModule } from '../upload/upload.module';
 import { PdfService } from './pdf.service';
 import { UsersModule } from '../users/users.module';
 import { PricingModule } from '../pricing/pricing.module';
-import { GeminiService } from './services/gemini.service';
-import { AiSolveService } from './services/ai-solve.service';
 import { Feature } from '../pricing/entities/feature.entity';
 import { PlanLimit } from '../pricing/entities/plan-limit.entity';
 
@@ -32,7 +30,7 @@ import { PlanLimit } from '../pricing/entities/plan-limit.entity';
     PricingModule,
   ],
   controllers: [QuestionsController],
-  providers: [QuestionsService, PdfService, GeminiService, AiSolveService],
+  providers: [QuestionsService, PdfService],
   exports: [PdfService],
 })
 export class QuestionsModule {}

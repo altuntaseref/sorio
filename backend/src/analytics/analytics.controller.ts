@@ -2,7 +2,6 @@ import { Controller, Get, Query, UseGuards, Post, ForbiddenException } from '@ne
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { AnalyticsService } from './analytics.service';
-import { DetailedAnalysisAiService } from './services/detailed-analysis-ai.service';
 import { DetailedAnalysisStorageService } from './services/detailed-analysis-storage.service';
 import { GetWeeklyActivityDto } from './dto/get-weekly-activity.dto';
 import { AnalysisRangeDto } from './dto/analysis-range.dto';
@@ -16,7 +15,6 @@ import { PricingUsageService } from '../pricing/services/pricing-usage.service';
 export class AnalyticsController {
   constructor(
     private readonly analyticsService: AnalyticsService,
-    private readonly detailedAnalysisAiService: DetailedAnalysisAiService,
     private readonly analysisStorageService: DetailedAnalysisStorageService,
     private readonly pricingUsageService: PricingUsageService,
   ) {}
@@ -118,16 +116,10 @@ export class AnalyticsController {
     // Plan kontrolü
     const { plan } = await this.pricingUsageService.getActivePlan(userId);
     const isPro = plan.code === 'pro_tier';
-    const isPremium = plan.code === 'premium_tier';
-    const isFree = plan.code === 'free_tier';
 
-    // Free kullanıcılar analiz alamaz
-    if (isFree) {
-      throw new ForbiddenException('This feature is only available for Pro and Premium users');
-    }
-
-    if (!isPro && !isPremium) {
-      throw new ForbiddenException('This feature is only available for Pro and Premium users');
+    // Sadece Pro kullanıcılar analiz alabilir
+    if (!isPro) {
+      throw new ForbiddenException('This feature is only available for Pro users');
     }
 
     const analyses = await this.analysisStorageService.getAllAnalyses(userId);
@@ -174,15 +166,15 @@ export class AnalyticsController {
           ? a.weekEnd 
           : new Date(a.weekEnd);
 
-        // TÜM alanları her zaman response'a ekle (Premium için dolu, Pro için boş)
+        // TÜM alanları her zaman response'a ekle (Pro için sadece general)
         const analysisData: any = {
           id: a.id,
           weekStart: weekStart.toISOString().split('T')[0],
           weekEnd: weekEnd.toISOString().split('T')[0],
           general: parsedAnalysis.general || '',
-          questions: isPremium ? (parsedAnalysis.questions || '') : '',
-          time: isPremium ? (parsedAnalysis.time || '') : '',
-          mockExams: isPremium ? (parsedAnalysis.mockExams || '') : '',
+          questions: '',
+          time: '',
+          mockExams: '',
           r2Url: a.r2Url,
           createdAt: a.createdAt,
         };
@@ -203,16 +195,10 @@ export class AnalyticsController {
     // Plan kontrolü
     const { plan } = await this.pricingUsageService.getActivePlan(userId);
     const isPro = plan.code === 'pro_tier';
-    const isPremium = plan.code === 'premium_tier';
-    const isFree = plan.code === 'free_tier';
 
-    // Free kullanıcılar analiz alamaz
-    if (isFree) {
-      throw new ForbiddenException('This feature is only available for Pro and Premium users');
-    }
-
-    if (!isPro && !isPremium) {
-      throw new ForbiddenException('This feature is only available for Pro and Premium users');
+    // Sadece Pro kullanıcılar analiz alabilir
+    if (!isPro) {
+      throw new ForbiddenException('This feature is only available for Pro users');
     }
 
     const analysis = await this.analysisStorageService.getLatestAnalysis(userId);
@@ -264,15 +250,15 @@ export class AnalyticsController {
       ? analysis.weekEnd 
       : new Date(analysis.weekEnd);
 
-    // TÜM alanları her zaman response'a ekle (Premium için dolu, Pro için boş)
+    // TÜM alanları her zaman response'a ekle (Pro için sadece general)
     const responseData: any = {
       id: analysis.id,
       weekStart: weekStart.toISOString().split('T')[0],
       weekEnd: weekEnd.toISOString().split('T')[0],
       general: parsedAnalysis.general || '',
-      questions: isPremium ? (parsedAnalysis.questions || '') : '',
-      time: isPremium ? (parsedAnalysis.time || '') : '',
-      mockExams: isPremium ? (parsedAnalysis.mockExams || '') : '',
+      questions: '',
+      time: '',
+      mockExams: '',
       r2Url: analysis.r2Url,
       createdAt: analysis.createdAt,
     };

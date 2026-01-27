@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
 import { DetailedAnalysisDataService } from './services/detailed-analysis-data.service';
-import { DetailedAnalysisAiService } from './services/detailed-analysis-ai.service';
 import { DetailedAnalysisStorageService } from './services/detailed-analysis-storage.service';
 import { WeeklyAnalysisSchedulerService } from './services/weekly-analysis-scheduler.service';
 import { MotivationModule } from '../motivation/motivation.module';
@@ -50,7 +49,6 @@ import { User } from '../users/entities/user.entity';
   providers: [
     AnalyticsService,
     DetailedAnalysisDataService,
-    DetailedAnalysisAiService,
     DetailedAnalysisStorageService,
     WeeklyAnalysisSchedulerService,
   ],

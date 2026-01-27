@@ -79,8 +79,8 @@ export default function PricingPage() {
   }, []);
 
   const sortedPlans = useMemo(() => {
-    // Planları sırala: Free, Pro, Premium (Pro ortada olsun)
-    const planOrder = ['free_tier', 'pro_tier', 'premium_tier'];
+    // Planları sırala: Free, Pro
+    const planOrder = ['free_tier', 'pro_tier'];
     return [...plans].sort((a, b) => {
       const aIndex = planOrder.indexOf(a.code);
       const bIndex = planOrder.indexOf(b.code);

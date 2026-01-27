@@ -140,8 +140,8 @@ export class RevenueCatWebhookService {
       `Initial purchase processed: User ${user.id} -> Plan ${plan.code}`,
     );
 
-    // Pro veya Premium plana geçişte analiz oluştur
-    if (plan.code === 'pro_tier' || plan.code === 'premium_tier') {
+    // Pro plana geçişte analiz oluştur
+    if (plan.code === 'pro_tier') {
       // Background'da çalıştır (await etme, hata olursa log'la)
       this.weeklyAnalysisSchedulerService
         .generateAnalysisForUserOnUpgrade(user.id)
@@ -263,8 +263,8 @@ export class RevenueCatWebhookService {
   }
 
   private extractPlanCodeFromProductId(productId: string): string | null {
-    // Product ID formatları: pro_monthly, pro_yearly, premium_monthly, etc.
-    // Plan code formatları: pro_tier, premium_tier, free_tier
+    // Product ID formatları: pro_monthly, pro_yearly, etc.
+    // Plan code formatları: pro_tier, free_tier
 
     // Eğer product_id direkt plan code ise
     if (productId.includes('_tier')) {

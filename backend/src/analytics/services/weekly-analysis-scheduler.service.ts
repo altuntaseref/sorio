@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { UserPlan } from '../../pricing/entities/user-plan.entity';
 import { Plan } from '../../pricing/entities/plan.entity';
-import { DetailedAnalysisAiService } from './detailed-analysis-ai.service';
 import { DetailedAnalysisStorageService } from './detailed-analysis-storage.service';
 import { PricingUsageService } from '../../pricing/services/pricing-usage.service';
 
@@ -17,41 +16,36 @@ export class WeeklyAnalysisSchedulerService {
     private userPlanRepository: Repository<UserPlan>,
     @InjectRepository(Plan)
     private planRepository: Repository<Plan>,
-    private analysisAiService: DetailedAnalysisAiService,
     private analysisStorageService: DetailedAnalysisStorageService,
     private pricingUsageService: PricingUsageService,
   ) {}
 
   /**
    * Her Pazartesi gece yarısı (00:00) çalışır
-   * Önceki hafta için tüm Pro ve Premium kullanıcıların analizini oluşturur
+   * Önceki hafta için tüm Pro kullanıcıların analizini oluşturur
    * - Pro kullanıcılar için: Sadece GENEL analiz
-   * - Premium kullanıcılar için: GENEL, SORULAR, ZAMAN, DENEMELER analizleri
+   * 
+   * NOT: AI servisi kaldırıldığı için bu scheduler şu anda devre dışı bırakılmıştır.
    */
-  @Cron('0 0 * * 1') // Her Pazartesi gece yarısı (00:00)
+  // @Cron('0 0 * * 1') // Her Pazartesi gece yarısı (00:00) - DEVRE DIŞI
   async generateWeeklyAnalyses() {
-    this.logger.log('Starting weekly analysis generation for Pro and Premium users...');
+    this.logger.log('Starting weekly analysis generation for Pro users...');
 
     try {
-      // Pro ve Premium plan kodlarını bul
-      const proAndPremiumPlans = await this.planRepository.find({
-        where: [
-          { code: 'pro_tier' },
-          { code: 'premium_tier' },
-        ],
+      // Pro plan kodunu bul
+      const proPlan = await this.planRepository.findOne({
+        where: { code: 'pro_tier' },
       });
 
-      if (proAndPremiumPlans.length === 0) {
-        this.logger.warn('No pro or premium plans found');
+      if (!proPlan) {
+        this.logger.warn('No pro plan found');
         return;
       }
 
-      const planIds = proAndPremiumPlans.map((p) => p.id);
-
-      // Aktif Pro ve Premium kullanıcıları bul
+      // Aktif Pro kullanıcıları bul
       const activeUsers = await this.userPlanRepository.find({
         where: {
-          planId: In(planIds),
+          planId: proPlan.id,
           status: In(['active', 'trialing']),
         },
         select: ['userId'],
@@ -59,7 +53,7 @@ export class WeeklyAnalysisSchedulerService {
 
       const userIds = [...new Set(activeUsers.map((up) => up.userId))];
 
-      this.logger.log(`Found ${userIds.length} Pro and Premium users for analysis`);
+      this.logger.log(`Found ${userIds.length} Pro users for analysis`);
 
       // Bu hafta için analiz oluştur
       const now = new Date();
@@ -129,24 +123,11 @@ export class WeeklyAnalysisSchedulerService {
         `Generating analysis for user ${userId}, week ${normalizedWeekStart.toISOString().split('T')[0]}`,
       );
 
-      // Kullanıcının plan tipini kontrol et
-      const { plan } = await this.pricingUsageService.getActivePlan(userId);
-      const isPremium = plan.code === 'premium_tier';
-
-      // Haftalık analiz oluştur (önceki hafta ile karşılaştırma)
-      // Pro kullanıcılar için sadece GENEL, Premium için tüm kategoriler
-      const { analysis, dataSummary, scenario } =
-        await this.analysisAiService.generateDetailedAnalysis(userId, true, isPremium);
-
-      // Analizi kaydet (R2'ye kaydetme opsiyonel, şimdilik DB'ye kaydet)
-      await this.analysisStorageService.saveAnalysis(
-        userId,
-        normalizedWeekStart,
-        weekEnd,
-        analysis,
-        { ...dataSummary, scenario },
-        false, // R2'ye kaydetme (opsiyonel)
+      // AI servisi kaldırıldığı için analiz oluşturma işlemi devre dışı bırakılmıştır
+      this.logger.warn(
+        `AI analysis service is disabled. Skipping analysis generation for user ${userId}.`,
       );
+      return;
 
       this.logger.log(
         `Analysis generated and saved for user ${userId}, week ${normalizedWeekStart.toISOString().split('T')[0]}`,
@@ -161,7 +142,7 @@ export class WeeklyAnalysisSchedulerService {
 
   /**
    * Paket yükseltme sonrası kullanıcı için analiz oluştur
-   * Sadece Pro veya Premium plana geçişte çalışır
+   * Sadece Pro plana geçişte çalışır
    * Önceki hafta için analiz oluşturur
    */
   async generateAnalysisForUserOnUpgrade(userId: string): Promise<void> {
@@ -169,12 +150,11 @@ export class WeeklyAnalysisSchedulerService {
       // Kullanıcının aktif planını kontrol et
       const { plan } = await this.pricingUsageService.getActivePlan(userId);
       const isPro = plan.code === 'pro_tier';
-      const isPremium = plan.code === 'premium_tier';
 
-      // Sadece Pro veya Premium kullanıcılar için analiz oluştur
-      if (!isPro && !isPremium) {
+      // Sadece Pro kullanıcılar için analiz oluştur
+      if (!isPro) {
         this.logger.log(
-          `User ${userId} is not on Pro or Premium plan. Skipping analysis generation.`,
+          `User ${userId} is not on Pro plan. Skipping analysis generation.`,
         );
         return;
       }
