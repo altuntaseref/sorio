@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Production için standalone output kullan (daha küçük Docker image)
+  output: 'standalone',
 };
 
 export default nextConfig;
