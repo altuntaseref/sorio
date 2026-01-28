@@ -17,9 +17,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         synchronize: false,
         // İŞTE ÇÖZÜM BU: Uygulama başlarken migrationları otomatik çalıştır.
         migrationsRun: true,
-        // SSL (Coolify/Render/Railway genelde ister)
+        // SSL: Sadece DB_SSL=true environment variable'ı set edildiğinde aktif olur
+        // Bazı veritabanları SSL desteklemez, bu yüzden esnek bir yapı kullanıyoruz
         ssl:
-          configService.get<string>('NODE_ENV') === 'production'
+          configService.get<string>('DB_SSL') === 'true'
             ? { rejectUnauthorized: false }
             : false,
         logging: configService.get<string>('NODE_ENV') === 'development',
