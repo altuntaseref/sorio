@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -16,14 +17,22 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as crypto from 'crypto';
 import { MailService } from '../mail/mail.service';
+import { Plan } from '../pricing/entities/plan.entity';
+import { UserPlan } from '../pricing/entities/user-plan.entity';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(Plan)
+    private planRepository: Repository<Plan>,
+    @InjectRepository(UserPlan)
+    private userPlanRepository: Repository<UserPlan>,
     private mailService: MailService,
   ) {}
 
@@ -44,6 +53,30 @@ export class AuthService {
       lastName: registerDto.lastName,
       provider: 'email',
     });
+
+    // Yeni kullanıcıya beta_tier planını ata
+    try {
+      const betaPlan = await this.planRepository.findOne({
+        where: { code: 'beta_tier' },
+      });
+
+      if (betaPlan) {
+        const userPlan = this.userPlanRepository.create({
+          userId: newUser.id,
+          planId: betaPlan.id,
+          status: 'active',
+          startsAt: new Date(),
+        });
+
+        await this.userPlanRepository.save(userPlan);
+        this.logger.log(`Beta tier plan assigned to user ${newUser.id}`);
+      } else {
+        this.logger.warn('Beta tier plan not found in database');
+      }
+    } catch (error) {
+      // Plan atama hatası kayıt işlemini engellemesin
+      this.logger.error('Failed to assign beta tier plan to new user', error);
+    }
 
     const tokens = await this._generateAndSaveTokens(newUser);
 

@@ -10,14 +10,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { MailModule } from '../mail/mail.module';
+import { PricingModule } from '../pricing/pricing.module';
+import { Plan } from '../pricing/entities/plan.entity';
+import { UserPlan } from '../pricing/entities/user-plan.entity';
 @Module({
   imports: [
     UsersModule,
     PassportModule,
     ConfigModule,
     JwtModule.register({}),
-    TypeOrmModule.forFeature([RefreshToken]),
+    TypeOrmModule.forFeature([RefreshToken, Plan, UserPlan]),
     MailModule,
+    PricingModule,
   ],
   providers: [AuthService, JwtStrategy, RefreshTokenStrategy],
   controllers: [AuthController],
