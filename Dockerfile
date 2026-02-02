@@ -45,6 +45,8 @@ RUN echo "Copying files from builder stage..." && \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/typeorm.config.ts ./
 COPY --from=builder /app/tsconfig.json ./
+# Copy .data folder for seed script
+COPY .data ./.data
 
 # Verify copied files
 RUN echo "Verifying copied files in production stage..." && \
