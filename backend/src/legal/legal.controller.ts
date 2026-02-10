@@ -7,7 +7,7 @@ import * as path from 'path';
 export class LegalController {
   @Get('privacy-policy')
   getPrivacyPolicy(@Res() res: Response) {
-    const templatePath = path.join(process.cwd(), '..', 'templates', 'privacy-policy.html');
+    const templatePath = path.join(process.cwd(), 'templates', 'privacy-policy.html');
     
     if (!fs.existsSync(templatePath)) {
       throw new NotFoundException('Privacy policy not found');
@@ -20,7 +20,7 @@ export class LegalController {
 
   @Get('terms-of-use')
   getTermsOfUse(@Res() res: Response) {
-    const templatePath = path.join(process.cwd(), '..', 'templates', 'term-of-use.html');
+    const templatePath = path.join(process.cwd(), 'templates', 'term-of-use.html');
     
     if (!fs.existsSync(templatePath)) {
       throw new NotFoundException('Terms of use not found');

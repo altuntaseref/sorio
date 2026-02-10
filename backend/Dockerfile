@@ -32,6 +32,7 @@ RUN npm ci --only=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/typeorm.config.ts ./
 COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/templates ./templates
 
 EXPOSE 3000
 
