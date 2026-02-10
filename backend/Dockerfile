@@ -11,10 +11,8 @@ COPY nest-cli.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source code (includes src/legal/templates)
 COPY . .
-# Copy templates directory explicitly
-COPY templates ./templates
 
 # Build the application
 RUN npm run build

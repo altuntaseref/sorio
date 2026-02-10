@@ -6,47 +6,58 @@ import * as path from 'path';
 @Controller('legal')
 export class LegalController {
   private getTemplatePath(filename: string): string {
-    // Try multiple possible paths
-    const possiblePaths = [
-      path.join(process.cwd(), 'templates', filename), // Production: /app/templates
-      path.join(process.cwd(), '..', 'templates', filename), // Development: ../templates
-      path.join(__dirname, '..', '..', '..', 'templates', filename), // From dist/src/legal
-      path.join(__dirname, '..', '..', 'templates', filename), // Alternative
+    // Templates are in src/legal/templates, which gets compiled to dist/src/legal/templates
+    // __dirname in production is /app/dist/src/legal
+    // So we need to go: ./templates/filename
+    const templatePath = path.join(__dirname, 'templates', filename);
+    
+    if (fs.existsSync(templatePath)) {
+      return templatePath;
+    }
+
+    // Fallback: try other possible paths
+    const fallbackPaths = [
+      path.join(__dirname, '..', 'legal', 'templates', filename),
+      path.join(process.cwd(), 'templates', filename),
+      path.join(process.cwd(), 'dist', 'src', 'legal', 'templates', filename),
     ];
 
-    for (const templatePath of possiblePaths) {
-      if (fs.existsSync(templatePath)) {
-        return templatePath;
+    for (const fallbackPath of fallbackPaths) {
+      if (fs.existsSync(fallbackPath)) {
+        return fallbackPath;
       }
     }
 
-    // If none found, return the first one (will throw error)
-    return possiblePaths[0];
+    // If none found, throw error with debug info
+    throw new NotFoundException(
+      `Template not found: ${filename}. ` +
+      `Searched: ${templatePath}, ` +
+      `cwd: ${process.cwd()}, ` +
+      `__dirname: ${__dirname}`
+    );
   }
 
   @Get('privacy-policy')
   getPrivacyPolicy(@Res() res: Response) {
-    const templatePath = this.getTemplatePath('privacy-policy.html');
-    
-    if (!fs.existsSync(templatePath)) {
-      throw new NotFoundException(`Privacy policy not found. Searched paths: ${process.cwd()}`);
+    try {
+      const templatePath = this.getTemplatePath('privacy-policy.html');
+      const html = fs.readFileSync(templatePath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (error) {
+      throw error;
     }
-
-    const html = fs.readFileSync(templatePath, 'utf-8');
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
   }
 
   @Get('terms-of-use')
   getTermsOfUse(@Res() res: Response) {
-    const templatePath = this.getTemplatePath('term-of-use.html');
-    
-    if (!fs.existsSync(templatePath)) {
-      throw new NotFoundException(`Terms of use not found. Searched paths: ${process.cwd()}`);
+    try {
+      const templatePath = this.getTemplatePath('term-of-use.html');
+      const html = fs.readFileSync(templatePath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (error) {
+      throw error;
     }
-
-    const html = fs.readFileSync(templatePath, 'utf-8');
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
   }
 }
