@@ -43,4 +43,15 @@ export class LegalController {
       throw error;
     }
   }
+  @Get('delete-account')
+  getDeleteAccount(@Res() res: Response) {
+    try {
+      const templatePath = this.getTemplatePath('delete-account.html');
+      const html = fs.readFileSync(templatePath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (error) {
+      throw error;
+    }
+  }
 }

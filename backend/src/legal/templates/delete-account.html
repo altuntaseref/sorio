@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorio - Hesap Silme Talebi</title>
+    <style>
+        :root {
+            --bg-color: #111318;
+            --card-bg: #1c1f27;
+            --text-main: #e2e8f0;
+            --accent: #ef4444; /* Kırmızı - Silme işlemi olduğu için */
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border: 1px solid #2d3748;
+            text-align: center;
+        }
+        h1 { color: var(--accent); margin-bottom: 20px; }
+        p { color: #94a3b8; margin-bottom: 30px; line-height: 1.6; }
+        .info-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--accent);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #ffcccc;
+        }
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .email-link {
+            color: #22d3ee;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Hesabımı Sil</h1>
+    
+    <div class="info-box">
+        ⚠️ <strong>Dikkat:</strong> Hesabınızı sildiğinizde; yüklediğiniz tüm sorular, analiz verileri ve premium haklarınız kalıcı olarak silinecektir. Bu işlem geri alınamaz.
+    </div>
+
+    <p>Hesabınızı silmek için iki yöntem bulunmaktadır:</p>
+    
+    <div style="text-align: left; margin-bottom: 30px;">
+        <p><strong>1. Uygulama İçinden (En Hızlı):</strong><br>
+        Sorio uygulamasını açın, <em>Ayarlar > Profil > Hesabımı Sil</em> adımlarını izleyin.</p>
+        
+        <p><strong>2. E-posta Yoluyla:</strong><br>
+        Uygulamaya erişiminiz yoksa, kayıtlı e-posta adresinizden aşağıdaki adrese konu başlığı "HESAP SİLME TALEBİ" olan bir mail atınız.</p>
+    </div>
+
+    <!-- Buraya kendi destek mailini yaz -->
+    <p>Destek E-postası: <br> 
+    <a href="mailto:destek@sorui.bdd.technologies.com" class="email-link">destek@sorui.bdd.technologies.com</a></p>
+
+    <p style="font-size: 12px; margin-top: 40px;">Talebiniz incelendikten sonra verileriniz 30 gün içinde sistemlerimizden tamamen kaldırılacaktır.</p>
+</div>
+
+</body>
+</html>
