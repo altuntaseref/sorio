@@ -13,6 +13,8 @@ RUN npm ci
 
 # Copy source code
 COPY . .
+# Copy templates directory explicitly
+COPY templates ./templates
 
 # Build the application
 RUN npm run build
@@ -42,4 +44,4 @@ ENV NODE_ENV=production
 
 # Start the application (migrations will run automatically in main.ts)
 # Coolify will use this as default, but you can override in Coolify settings
-CMD node dist/main.js
+CMD node dist/src/main.js
