@@ -478,10 +478,12 @@ export class PdfService {
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
+          '--disable-dev-shm-usage', // Docker için kritik (hafıza yönetimi)
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--disable-gpu',
+          '--single-process', // Bazen Docker'da gerekli olabilir
+          '--no-zygote',
         ],
       });
 

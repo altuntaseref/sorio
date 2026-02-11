@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y \
 
 # Chromium path'ini ayarla (Debian'da genellikle chromium-browser olarak kurulur)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Copy package files
 COPY package*.json ./
