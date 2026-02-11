@@ -382,32 +382,20 @@ export class PdfService {
    * Chromium executable path'ini bulur
    */
   private getChromiumPath(): string {
-    // Environment variable'dan al
+    // 1. Docker ENV (Dockerfile'dan gelen)
     if (process.env.PUPPETEER_EXECUTABLE_PATH) {
       return process.env.PUPPETEER_EXECUTABLE_PATH;
     }
 
-    // Olası yolları dene
-    const possiblePaths = [
-      '/usr/bin/chromium-browser',
-      '/usr/bin/chromium',
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-    ];
-
-    // İlk bulunan geçerli yolu döndür
-    for (const path of possiblePaths) {
-      try {
-        if (fs.existsSync(path)) {
-          return path;
-        }
-      } catch (e) {
-        // Ignore
-      }
+    // 2. Local Development (Windows/Mac)
+    const platform = process.platform;
+    if (platform === 'win32') {
+       // Windows'taki Chrome yolunu buraya yazabilirsin veya boş bırakıp puppeteer'ın indirdiğini kullanmasını sağlayabilirsin
+       // return 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'; 
     }
-
-    // Fallback
-    return '/usr/bin/chromium-browser';
+    
+    // Varsayılan (ENV yoksa null dönsün, puppeteer kendi yolunu dener)
+    return null; 
   }
 
   /**
@@ -423,10 +411,12 @@ export class PdfService {
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
+          '--disable-dev-shm-usage', // Docker için çok önemli
           '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process', 
+          '--disable-extensions'
         ],
       });
 
