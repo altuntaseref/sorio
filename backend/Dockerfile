@@ -8,6 +8,9 @@ COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 
+# Puppeteer'ın kendi Chrome'unu indirmemesi için
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 # Install dependencies
 RUN npm ci
 
@@ -17,7 +20,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production stage - Puppeteer için Debian tabanlı imaj kullan
+# Production stage - Debian slim
 FROM node:20-slim AS production
 
 WORKDIR /app
@@ -31,6 +34,7 @@ RUN apt-get update && apt-get install -y \
     fonts-thai-tlwg \
     fonts-kacst \
     fonts-freefont-ttf \
+    fonts-liberation \
     libxss1 \
     libxtst6 \
     libnss3 \
@@ -38,13 +42,15 @@ RUN apt-get update && apt-get install -y \
     libatk-bridge2.0-0 \
     libgtk-3-0 \
     libgbm1 \
+    libdrm2 \
+    libxshmfence1 \
     ca-certificates \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Chromium için environment variable
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Chromium path'ini ayarla
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Copy package files
 COPY package*.json ./
@@ -60,7 +66,7 @@ COPY --from=builder /app/tsconfig.json ./
 
 EXPOSE 3000
 
-ENV RUN_MIGRATIONS=true
-ENV NODE_ENV=production
+ENV RUN_MIGRATIONS=true \
+    NODE_ENV=production
 
-CMD node dist/src/main.js
+CMD ["node", "dist/src/main.js"]
