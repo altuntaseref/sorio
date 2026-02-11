@@ -12,6 +12,7 @@ import puppeteer from 'puppeteer-core';
 import * as https from 'https';
 import * as http from 'http';
 import { URL } from 'url';
+import * as fs from 'fs';
 
 interface PdfOptions {
   title?: string;
@@ -378,6 +379,38 @@ export class PdfService {
   }
 
   /**
+   * Chromium executable path'ini bulur
+   */
+  private getChromiumPath(): string {
+    // Environment variable'dan al
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      return process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+
+    // Olası yolları dene
+    const possiblePaths = [
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium',
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+    ];
+
+    // İlk bulunan geçerli yolu döndür
+    for (const path of possiblePaths) {
+      try {
+        if (fs.existsSync(path)) {
+          return path;
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    // Fallback
+    return '/usr/bin/chromium-browser';
+  }
+
+  /**
    * HTML'i PDF'e çevirir
    */
   private async htmlToPdf(htmlContent: string): Promise<Buffer> {
@@ -386,7 +419,7 @@ export class PdfService {
     try {
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        executablePath: this.getChromiumPath(),
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -441,7 +474,7 @@ export class PdfService {
     try {
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        executablePath: this.getChromiumPath(),
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
