@@ -395,7 +395,7 @@ export class PdfService {
     }
     
     // Varsayılan (ENV yoksa null dönsün, puppeteer kendi yolunu dener)
-    return null; 
+    return ''; 
   }
 
   /**
@@ -407,7 +407,7 @@ export class PdfService {
     try {
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: this.getChromiumPath(),
+        executablePath: this.getChromiumPath() || undefined,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
