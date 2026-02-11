@@ -25,19 +25,22 @@
     
     # Alpine için Chromium ve gerekli kütüphaneleri yükle
     # Alpine'da chromium'un çalışması için bu paketler şarttır
-    RUN apk add --no-cache \
+    RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
+        echo "http://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
+        apk update && \
+        apk add --no-cache \
         chromium \
         nss \
         freetype \
         harfbuzz \
         ca-certificates \
         ttf-freefont \
-        nodejs \
-        yarn
+        libstdc++ \
+        udev
     
     # Puppeteer Ayarları (Alpine'da path: /usr/bin/chromium-browser)
     ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-        PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+        PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
     
     # Sadece production paketlerini yükle
     COPY package*.json ./
