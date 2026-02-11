@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Question } from './entities/question.entity';
 import { R2Service } from '../upload/r2.service';
 import { User } from '../users/entities/user.entity';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import * as https from 'https';
 import * as http from 'http';
 import { URL } from 'url';
@@ -386,7 +386,15 @@ export class PdfService {
     try {
       browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--disable-gpu',
+        ],
       });
 
       const page = await browser.newPage();
@@ -432,17 +440,15 @@ export class PdfService {
 
     try {
       browser = await puppeteer.launch({
-        executablePath: '/usr/bin/chromium',
         headless: true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-software-rasterizer',
-          '--disable-extensions',
+          '--disable-accelerated-2d-canvas',
           '--no-first-run',
-          '--no-zygote',
+          '--disable-gpu',
         ],
       });
 
