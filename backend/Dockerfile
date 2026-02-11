@@ -1,58 +1,59 @@
 # --- Build Stage ---
-    FROM node:20-alpine AS builder
+    FROM node:20-slim AS builder
 
     WORKDIR /app
     
-    # Paket dosyalarını kopyala
+    # Puppeteer'ın gereksiz indirmesini engelle
+    ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    
     COPY package*.json ./
     COPY tsconfig*.json ./
     COPY nest-cli.json ./
     
-    # Puppeteer'ın kendi Chrome'unu indirmesini engelle
-    ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-    
     # Bağımlılıkları yükle
     RUN npm ci
     
-    # Kaynak kodları kopyala ve build al
+    # Kaynak kodu kopyala ve derle
     COPY . .
     RUN npm run build
     
     # --- Production Stage ---
-    FROM node:20-alpine AS production
+    FROM node:20-slim AS production
     
     WORKDIR /app
     
-    # Alpine için Chromium ve gerekli kütüphaneleri yükle
-    # Alpine'da chromium'un çalışması için bu paketler şarttır
-    RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.19/main" > /etc/apk/repositories && \
-        echo "http://dl-cdn.alpinelinux.org/alpine/v3.19/community" >> /etc/apk/repositories && \
-        apk update && \
-        apk add --no-cache \
+    # 1. KRİTİK ADIM: Puppeteer için gerekli sistem kütüphanelerini ve Chromium'u yükle
+    # apt-get kullanarak Chromium'u kuruyoruz (Senin istediğin yöntem)
+    RUN apt-get update && apt-get install -y \
         chromium \
-        nss \
-        freetype \
-        harfbuzz \
+        libnss3 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libxkbcommon-x11-0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxrandr2 \
+        libgbm1 \
+        libasound2 \
+        fonts-liberation \
         ca-certificates \
-        ttf-freefont \
-        libstdc++ \
-        udev
+        --no-install-recommends \
+        && rm -rf /var/lib/apt/lists/*
     
-    # Puppeteer Ayarları (Alpine'da path: /usr/bin/chromium-browser)
+    # 2. Chromium yolunu sisteme tanıt
+    # Debian'da apt-get ile kurulan chromium genellikle bu yoldadır:
     ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
         PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
     
-    # Sadece production paketlerini yükle
     COPY package*.json ./
     RUN npm ci --only=production
     
-    # Build aşamasından dosyaları al
+    # Derlenmiş dosyaları kopyala
     COPY --from=builder /app/dist ./dist
-    COPY --from=builder /app/src/legal/templates ./dist/src/legal/templates 
-    # (Eğer typeorm config vb. gerekiyorsa onları da ekle)
+    # (Varsa legal templates vb. buraya ekle)
+    # COPY --from=builder /app/src/legal/templates ./dist/src/legal/templates
     
     EXPOSE 3000
-    
     ENV NODE_ENV=production
     
     CMD ["node", "dist/src/main.js"]
