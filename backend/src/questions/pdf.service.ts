@@ -395,7 +395,7 @@ export class PdfService {
     }
     
     // Varsayılan (ENV yoksa null dönsün, puppeteer kendi yolunu dener)
-    return '/usr/bin/chromium'; 
+    return '/usr/bin/google-chrome-stable'; 
   }
 
   /**

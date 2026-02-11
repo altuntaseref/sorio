@@ -1,57 +1,43 @@
 # --- Build Stage ---
-    FROM node:20-slim AS builder
+    FROM node:20 AS builder
 
     WORKDIR /app
     
-    # Puppeteer'ın gereksiz indirmesini engelle
     ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     
     COPY package*.json ./
     COPY tsconfig*.json ./
     COPY nest-cli.json ./
     
-    # Bağımlılıkları yükle
     RUN npm ci
     
-    # Kaynak kodu kopyala ve derle
     COPY . .
     RUN npm run build
     
     # --- Production Stage ---
-    FROM node:20-slim AS production
+    # Slim DEĞİL, Alpine DEĞİL. Tam sürüm kullanıyoruz.
+    FROM node:20 AS production
     
     WORKDIR /app
     
-    # 1. KRİTİK ADIM: Puppeteer için gerekli sistem kütüphanelerini ve Chromium'u yükle
-    # apt-get kullanarak Chromium'u kuruyoruz (Senin istediğin yöntem)
-    RUN apt-get update && apt-get install -y \
-        chromium \
-        libnss3 \
-        libatk-bridge2.0-0 \
-        libcups2 \
-        libxkbcommon-x11-0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxrandr2 \
-        libgbm1 \
-        libasound2 \
-        fonts-liberation \
-        ca-certificates \
-        --no-install-recommends \
+    # Google Chrome'u en güvenli yolla kuruyoruz
+    RUN apt-get update \
+        && apt-get install -y wget gnupg \
+        && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+        && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+        && apt-get update \
+        && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+          --no-install-recommends \
         && rm -rf /var/lib/apt/lists/*
     
-    # 2. Chromium yolunu sisteme tanıt
-    # Debian'da apt-get ile kurulan chromium genellikle bu yoldadır:
+    # Yol artık %100 burasıdır
     ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-        PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+        PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
     
     COPY package*.json ./
     RUN npm ci --only=production
     
-    # Derlenmiş dosyaları kopyala
     COPY --from=builder /app/dist ./dist
-    # (Varsa legal templates vb. buraya ekle)
-    # COPY --from=builder /app/src/legal/templates ./dist/src/legal/templates
     
     EXPOSE 3000
     ENV NODE_ENV=production
