@@ -26,6 +26,7 @@ export class DashboardService {
       focusAnalysis,
       examSuccess,
       examCountdown,
+      examBreakdown,
     ] = await Promise.all([
       this.getOverview(userId, resolvedExamCode),
       this.getSubjects(userId, resolvedExamCode),
@@ -36,6 +37,7 @@ export class DashboardService {
       this.getFocusAnalysis(userId, resolvedExamCode),
       this.getExamSuccess(userId, resolvedExamCode),
       this.getExamCountdown(userId, resolvedExamCode),
+      this.getExamBreakdown(userId),
     ]);
 
     return {
@@ -48,6 +50,7 @@ export class DashboardService {
       focusAnalysis,
       examSuccess,
       examCountdown,
+      examBreakdown,
     };
   }
 
@@ -650,6 +653,66 @@ export class DashboardService {
         examName: null,
         examCode: null,
       };
+    }
+  }
+
+  /**
+   * 10. SINAV BAZINDA SORU DETAYLARI (Hangi sınavdan hangi dersten ne kadar soru)
+   */
+  private async getExamBreakdown(userId: string) {
+    try {
+      // Tüm sınavları al
+      const exams = await this.examsService.findAll();
+
+      // Her sınav için soru sayılarını hesapla
+      const breakdownPromises = exams.map(async (exam) => {
+        // Bu sınav için toplam soru sayısı
+        const totalResult = await this.dataSource.query(
+          `
+          SELECT COUNT(*)::int as "totalQuestions"
+          FROM questions
+          WHERE user_id = $1::uuid
+            AND exam_code = $2
+          `,
+          [userId, exam.code],
+        );
+
+        // Bu sınav için ders bazında soru sayıları
+        const subjectsResult = await this.dataSource.query(
+          `
+          SELECT 
+            s.id as "subjectId",
+            s.name as "subjectName",
+            COUNT(q.id)::int as "questionCount"
+          FROM questions q
+          INNER JOIN subjects s ON q.subject_id = s.id
+          WHERE q.user_id = $1::uuid
+            AND q.exam_code = $2
+          GROUP BY s.id, s.name
+          ORDER BY "questionCount" DESC
+          `,
+          [userId, exam.code],
+        );
+
+        return {
+          examCode: exam.code,
+          examName: exam.name,
+          totalQuestions: Number(totalResult[0]?.totalQuestions || 0),
+          subjects: subjectsResult.map((row: any) => ({
+            subjectId: row.subjectId,
+            subjectName: row.subjectName,
+            questionCount: Number(row.questionCount || 0),
+          })),
+        };
+      });
+
+      const breakdown = await Promise.all(breakdownPromises);
+
+      // Sadece soru eklenmiş sınavları döndür (totalQuestions > 0)
+      return breakdown.filter((exam) => exam.totalQuestions > 0);
+    } catch (error) {
+      console.error('Exam breakdown fetch error:', error);
+      return [];
     }
   }
 }
