@@ -395,7 +395,7 @@ export class PdfService {
     }
     
     // Varsayılan (ENV yoksa null dönsün, puppeteer kendi yolunu dener)
-    return '/usr/bin/google-chrome-stable'; 
+    return '/usr/bin/chromium'; 
   }
 
   /**
@@ -407,16 +407,16 @@ export class PdfService {
     try {
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: this.getChromiumPath() || undefined,
+        executablePath: '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage', // Docker için çok önemli
-          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process', 
-          '--disable-extensions'
+          '--single-process',
+          '--disable-gpu',
         ],
       });
 
