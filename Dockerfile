@@ -58,9 +58,19 @@ RUN echo "Verifying copied files in production stage..." && \
 
 EXPOSE 3000
 
-# Set environment variable to run migrations on startup
-ENV RUN_MIGRATIONS=true
-ENV NODE_ENV=production
+ENV RUN_MIGRATIONS=true \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    NODE_ENV=production
+
+# Install Chromium and dependencies
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # Start the application (migrations will run automatically in main.ts)
 # Note: NestJS builds to dist/src/, so we use dist/src/main.js
